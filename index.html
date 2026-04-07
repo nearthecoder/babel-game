@@ -566,6 +566,7 @@ function setDiff(d,el){diff=d;document.querySelectorAll('#diff-row .opt-btn').fo
 function startGame(){
   document.getElementById('overlay').style.display='none';
   gs='playing';coins=100;score=0;hearts=20;wave=1;
+  if(!audioCtx){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();audioCtx.resume();}catch(e){}}
   enemies=[];towers=[];bullets=[];parts=[];streak=0;
   updateUI();updateXPBar();renderShop();
   startMusic();
@@ -1037,8 +1038,7 @@ function gameOver(){
   gs='gameover';
   document.getElementById('go').style.display='flex';
   document.getElementById('go-stats').innerHTML=`Wave ${wave}<br>Score ${score}<br>Level ${playerLevel}`;
-  stopMusic();
-}
+musicOn=false;stopMusic();}
 
 const MELODY=[0,4,7,12,7,4,0,4,5,9,12,9,5,4,7,11,14,11,7,4];
 let melodyIdx=0;
@@ -1078,8 +1078,8 @@ function playMelody(){
   musicTimer=setTimeout(playMelody,340);
 }
 
-function stopMusic(){musicOn=false;if(musicTimer)clearTimeout(musicTimer);if(audioCtx){audioCtx.close();audioCtx=null;}}
-function toggleMusic(){if(musicOn){stopMusic();document.getElementById('music-btn').textContent='🔇';}else{musicOn=true;document.getElementById('music-btn').textContent='🎵';startMusic();}}
+function stopMusic(){if(musicTimer)clearTimeout(musicTimer);musicTimer=null;if(audioCtx){audioCtx.close();audioCtx=null;}}
+function toggleMusic(){if(musicOn){musicOn=false;stopMusic();document.getElementById('music-btn').textContent='🔇';}else{musicOn=true;if(!audioCtx){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();audioCtx.resume();}catch(e){}}document.getElementById('music-btn').textContent='🎵';playMelody();}}
 
 window.addEventListener('resize',()=>{initCanvas();});
 if(window.speechSynthesis)window.speechSynthesis.getVoices();

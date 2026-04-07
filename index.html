@@ -536,6 +536,26 @@ function initCanvas(){
   H=mc.height=bgc2.height=window.innerHeight;
   ctx2=mc.getContext('2d');bgCtx2=bgc2.getContext('2d');
   PATH=makePath(W,H);drawBG();
+  mc.addEventListener('mousemove',e=>{const r=e.target.getBoundingClientRect();mouseX=e.clientX-r.left;mouseY=e.clientY-r.top;});
+  mc.addEventListener('click',e=>{
+    const r=e.target.getBoundingClientRect();
+    const x=e.clientX-r.left,y=e.clientY-r.top;
+    if(placing&&pickType){
+      const def=TOWERS[pickType];
+      if(!isOnPath(x,y)){
+        towers.push({x,y,type:pickType,cd:0,kills:0,upgrades:UPGRADES[pickType]?UPGRADES[pickType].map(()=>[0]):[]});
+        coins-=def.cost;updateUI();renderShop();
+        spawnParts(x,y,def.col,10);
+      }
+      placing=false;pickType=null;mouseX=0;mouseY=0;
+      document.getElementById('hint').style.display='none';
+      document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('selected'));
+      return;
+    }
+    const clicked=towers.find(t=>{const dx=t.x-x,dy=t.y-y;return Math.sqrt(dx*dx+dy*dy)<24;});
+    if(clicked){openUpgrade(clicked);}
+    else if(selectedTower){closeUpgrade();}
+  });
 }
 
 function drawBG(){
@@ -565,7 +585,7 @@ function setDiff(d,el){diff=d;document.querySelectorAll('#diff-row .opt-btn').fo
 
 function startGame(){
   document.getElementById('overlay').style.display='none';
-  gs='playing';coins=100;score=0;hearts=20;wave=1;
+  gs='playing';coins=100;score=0;hearts=20;wave=1;playerXP=0;playerLevel=1;
   if(!audioCtx){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();audioCtx.resume();}catch(e){}}
   enemies=[];towers=[];bullets=[];parts=[];streak=0;
   updateUI();updateXPBar();renderShop();
@@ -998,9 +1018,7 @@ function closeUpgrade(){
   selectedTower=null;
 }
 
-mc.addEventListener('mousemove',e=>{const r=e.target.getBoundingClientRect();mouseX=e.clientX-r.left;mouseY=e.clientY-r.top;});
 
-mc.addEventListener('click',e=>{
   const r=e.target.getBoundingClientRect();
   const x=e.clientX-r.left,y=e.clientY-r.top;
   if(placing&&pickType){

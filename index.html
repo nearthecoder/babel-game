@@ -109,7 +109,8 @@ canvas{position:absolute;top:0;left:0}
   </div>
   <div id="hint">Click off the path to place</div>
   <div id="wave-flash"></div>
-  <div id="music-btn" onclick="toggleMusic()">🎵</div>
+ <div id="music-btn" onclick="toggleMusic()">🎵</div>
+<div id="pause-btn" onclick="togglePause()" style="position:absolute;top:10px;right:52px;z-index:15;background:rgba(0,0,0,0.5);border:1.5px solid rgba(255,255,255,0.12);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px">⏸️</div>
   <div id="notif"></div>
 
   <div id="shop">
@@ -539,7 +540,7 @@ let learnWords=[],learnIdx=0;
 let qWords=[],qCur=null,streak=0,qLeft=0;
 let waveOn=false,spawnLeft=0,spawnTimer=0,spawnIdx=0;
 let last=0,animId=null,gs='start';
-let audioCtx=null,musicOn=true,musicTimer=null;
+let audioCtx=null,musicOn=true,musicTimer=null,paused=false;
 
 const MAPS=[
   {name:'The Crossing',points:(W,H)=>[
@@ -917,8 +918,9 @@ function updB(dt){
       }
       bullets.splice(i,1);
       for(let j=enemies.length-1;j>=0;j--){
-        if(enemies[j].hp<=0){
-          score+=15*wave;addXP(8);updateUI();
+       if(enemies[j].hp<=0){
+          const killGold=enemies[j].sz>22?8:enemies[j].sz>17?5:2;
+          coins+=killGold;score+=15*wave;addXP(8);updateUI();
           spawnParts(enemies[j].x,enemies[j].y,'#a78bfa',14);
           if(b.twrRef){b.twrRef.kills=(b.twrRef.kills||0)+1;}
           enemies.splice(j,1);
@@ -1017,9 +1019,14 @@ function draw2(){
   ctx2.globalAlpha=1;
 }
 
+function togglePause(){
+  paused=!paused;
+  document.getElementById('pause-btn').textContent=paused?'▶️':'⏸️';
+}
+
 function gameLoop(ts){
   const dt=Math.min(ts-last,50);last=ts;
-  if(gs==='playing'){
+  if(gs==='playing'&&!paused){
     if(waveOn)spawnE(dt);
     updE(dt);updT(dt);updB(dt);updP(dt);draw2();
   }

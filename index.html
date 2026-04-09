@@ -677,7 +677,6 @@ function showLearnCard(){
   document.getElementById('lc-meaning').textContent=w.m;
   document.getElementById('lc-prog').textContent=`Word ${learnIdx+1} of ${learnWords.length}`;
   document.getElementById('lc-next').textContent=learnIdx<learnWords.length-1?'Got it →':'Start Quiz →';
-  setTimeout(()=>nextLearn(),1800);
 }
 
 function speakLearn(){speak(learnWords[learnIdx].w);}
@@ -702,7 +701,6 @@ function nextLearn(){
 }
 
 function startQuiz(){
-  if(wave%2===0){startWave2();return;}
   qLeft=learnWords.length;
   qWords=[...learnWords];
   for(let i=qWords.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qWords[i],qWords[j]]=[qWords[j],qWords[i]];}
@@ -844,7 +842,11 @@ function updE(dt){
     else{e.x+=dx/dist*mv;e.y+=dy/dist*mv;}
   }
   if(waveOn&&spawnIdx>=spawnLeft&&!enemies.length){
-    waveOn=false;wave++;
+   waveOn=false;
+    const waveBonus=50+wave*15;
+    coins+=waveBonus;
+    showNotif(`Wave Complete! +${waveBonus} gold`);
+    wave++;
     addXP(15+wave*3);
     updateUI();
     showWave(wave,()=>{if(wave===1)startWave2();else startLearn();});

@@ -694,7 +694,11 @@ function initCanvas(){
     mouseY=e.clientY-r.top;
   });
 
-  mc.addEventListener('click',e=>{
+ mc.addEventListener('click',e=>{
+    if(document.getElementById('upgrade-panel').style.display==='flex')return;
+    if(document.getElementById('learn-panel').style.display==='flex')return;
+    if(document.getElementById('q-panel').style.display==='flex')return;
+    if(document.getElementById('pause-menu').style.display==='flex')return;
     const r=mc.getBoundingClientRect();
     const x=e.clientX-r.left,y=e.clientY-r.top;
     if(placing&&pickType){
@@ -715,12 +719,12 @@ function initCanvas(){
       document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('selected'));
       return;
     }
-    const clicked=towers.find(t=>{
+   const clicked=towers.find(t=>{
       const dx=t.x-x,dy=t.y-y;
-      return Math.sqrt(dx*dx+dy*dy)<24;
+      return Math.sqrt(dx*dx+dy*dy)<28;
     });
-    if(clicked){openUpgrade(clicked);}
-    else if(selectedTower){closeUpgrade();}
+    if(clicked){openUpgrade(clicked);return;}
+    if(selectedTower){closeUpgrade();}
   });
 }
 
@@ -795,7 +799,7 @@ enemies=[];towers=[];bullets=[];parts=[];beams=[];streak=0;usedWords=[];
   updateUI();updateXPBar();renderShop();
   stopMusic();
   startMusic();
-  saveProgress();showWave(wave,()=>{if(wave===1)startWave2();else startLearn();});
+  saveProgress();showWave(wave,()=>startLearn());
 cancelAnimationFrame(animId);
   animId=null;
   last=performance.now();
@@ -1029,7 +1033,7 @@ function updE(dt){
     wave++;
     addXP(15+wave*3);
     updateUI();
-    saveProgress();showWave(wave,()=>{if(wave===1)startWave2();else startLearn();});
+    saveProgress();showWave(wave,()=>startLearn());
   }
 }
 
@@ -1663,7 +1667,10 @@ function openUpgrade(tower){
     coins+=sellPrice;towers=towers.filter(t=>t!==tower);
     updateUI();closeUpgrade();showNotif(`Sold for ${sellPrice}g`);
   };
-  document.getElementById('upgrade-panel').style.display='flex';
+const upg=document.getElementById('upgrade-panel');
+  upg.style.display='flex';
+  upg.style.alignItems='center';
+  upg.style.justifyContent='center';
 }
 
 function closeUpgrade(){

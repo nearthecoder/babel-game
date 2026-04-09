@@ -164,8 +164,8 @@ canvas{position:absolute;top:0;left:0}
   <button class="opt-btn" onclick="setMap(1,this)">🌀 Spiral</button>
   <button class="opt-btn" onclick="setMap(2,this)">⚔️ Gauntlet</button>
 </div>
-      <button id="playbtn" onclick="startGame()">BEGIN QUEST</button>
-    </div>
+     <button id="playbtn" onclick="startGame()">NEW GAME</button>
+      <button id="contbtn" onclick="continueGame()" style="background:rgba(124,58,237,0.15);border:1.5px solid rgba(124,58,237,0.4);border-radius:50px;padding:10px 36px;font-family:'Cinzel',sans-serif;font-size:14px;letter-spacing:2px;color:#a78bfa;cursor:pointer;margin-top:8px;display:none">↩ CONTINUE</button>
   </div>
 
   <div id="learn-panel">
@@ -1710,8 +1710,31 @@ function loadProgress(){
       lang=s.lang||'korean';
       diff=s.diff||'basic';
       currentMap=s.currentMap||0;
+      const cb=document.getElementById('contbtn');
+      if(cb&&s.wave>1){cb.style.display='block';cb.textContent=`↩ CONTINUE — Wave ${s.wave} · Lv${s.playerLevel||1}`;}
     }
   }catch(e){}
+}
+
+function continueGame(){
+  document.getElementById('overlay').style.display='none';
+  gs='playing';
+  enemies=[];towers=[];bullets=[];parts=[];beams=[];streak=0;usedWords=[];
+  if(!audioCtx){
+    try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();audioCtx.resume();}catch(e){}
+  }
+  // sync map/lang/diff buttons to match save
+  document.querySelectorAll('#map-row .opt-btn').forEach((b,i)=>{b.classList.toggle('on',i===currentMap);});
+  document.querySelectorAll('#lang-row .opt-btn').forEach(b=>{b.classList.toggle('on',b.textContent.includes(lang==='korean'?'Korean':'Japanese'));});
+  document.querySelectorAll('#diff-row .opt-btn').forEach(b=>{b.classList.toggle('on',b.textContent.toLowerCase().includes(diff));});
+  updateUI();updateXPBar();renderShop();
+  stopMusic();startMusic();
+  PATH=makePath(W,H);
+  drawBG();
+  showWave(wave,()=>startLearn());
+  if(animId)cancelAnimationFrame(animId);
+  last=performance.now();
+  gameLoop(last);
 }
 window.addEventListener('resize',()=>{initCanvas();});
 if(window.speechSynthesis)window.speechSynthesis.getVoices();

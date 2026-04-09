@@ -761,9 +761,10 @@ enemies=[];towers=[];bullets=[];parts=[];beams=[];streak=0;usedWords=[];
   stopMusic();
   startMusic();
   saveProgress();showWave(wave,()=>{if(wave===1)startWave2();else startLearn();});
-  if(animId)cancelAnimationFrame(animId);
+cancelAnimationFrame(animId);
+  animId=null;
   last=performance.now();
-  gameLoop(last);
+  animId=requestAnimationFrame(gameLoop);
 }
 
 function restartGame(){
@@ -1549,12 +1550,14 @@ function goToMainMenu(){
 }
 
 function gameLoop(ts){
+  animId=requestAnimationFrame(gameLoop);
   const dt=Math.min(ts-last,50);last=ts;
   if(gs==='playing'&&!paused){
     if(waveOn)spawnE(dt);
     updE(dt);updT(dt);updB(dt);updBeams(dt);updP(dt);draw2();
+  } else if(gs==='playing'&&paused){
+    draw2();
   }
-  animId=requestAnimationFrame(gameLoop);
 }
 
 function tryPick(type){
@@ -1744,9 +1747,10 @@ function continueGame(){
   PATH=makePath(W,H);
   drawBG();
   showWave(wave,()=>startLearn());
-  if(animId)cancelAnimationFrame(animId);
+ cancelAnimationFrame(animId);
+  animId=null;
   last=performance.now();
-  gameLoop(last);
+  animId=requestAnimationFrame(gameLoop);
 }
 window.addEventListener('resize',()=>{initCanvas();});
 if(window.speechSynthesis)window.speechSynthesis.getVoices();

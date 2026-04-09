@@ -725,22 +725,57 @@ function initCanvas(){
 }
 
 function drawBG(){
-  bgCtx2.fillStyle='#0d0a1a';bgCtx2.fillRect(0,0,W,H);
-  for(let i=0;i<80;i++){
+  const themes=[
+    {bg:'#0d0a1a',star1:'167,139,250',star2:'244,114,182',pathGlow:'124,58,237',dirt:'30,16,64',dash:'124,58,237'},
+    {bg:'#0a1a0e',star1:'134,239,172',star2:'74,222,128',pathGlow:'22,163,74',dirt:'10,40,18',dash:'34,197,94'},
+    {bg:'#1a0a0a',star1:'252,165,165',star2:'251,113,133',pathGlow:'220,38,38',dirt:'50,10,10',dash:'239,68,68'},
+  ];
+  const th=themes[currentMap];
+
+  bgCtx2.fillStyle=th.bg;bgCtx2.fillRect(0,0,W,H);
+
+  // map 1 spiral: hex grid overlay
+  if(currentMap===1){
+    bgCtx2.strokeStyle='rgba(34,197,94,0.06)';bgCtx2.lineWidth=1;
+    for(let row=0;row<8;row++){
+      for(let col=0;col<12;col++){
+        const s=60,hx=col*s*1.5,hy=row*s*1.732+(col%2)*s*0.866;
+        bgCtx2.beginPath();
+        for(let j=0;j<6;j++){const a=Math.PI/3*j;bgCtx2.lineTo(hx+s*0.5*Math.cos(a),hy+s*0.5*Math.sin(a));}
+        bgCtx2.closePath();bgCtx2.stroke();
+      }
+    }
+  }
+
+  // map 2 gauntlet: dungeon grid
+  if(currentMap===2){
+    bgCtx2.strokeStyle='rgba(220,38,38,0.05)';bgCtx2.lineWidth=1;
+    for(let x=0;x<W;x+=48){bgCtx2.beginPath();bgCtx2.moveTo(x,0);bgCtx2.lineTo(x,H);bgCtx2.stroke();}
+    for(let y=0;y<H;y+=48){bgCtx2.beginPath();bgCtx2.moveTo(0,y);bgCtx2.lineTo(W,y);bgCtx2.stroke();}
+    // corner glow accents
+    bgCtx2.fillStyle='rgba(220,38,38,0.06)';
+    bgCtx2.fillRect(0,0,120,120);bgCtx2.fillRect(W-120,0,120,120);
+    bgCtx2.fillRect(0,H-120,120,120);bgCtx2.fillRect(W-120,H-120,120,120);
+  }
+
+  // stars/particles
+  for(let i=0;i<100;i++){
     const x=Math.random()*W,y=Math.random()*H;
-    const r=Math.random()*1.5+.3;
-    const a=Math.random()*.15+.03;
-    bgCtx2.fillStyle=`rgba(${Math.random()<.5?'167,139,250':'244,114,182'},${a})`;
+    const r=Math.random()*1.8+.3;
+    const a=Math.random()*.18+.04;
+    const col=Math.random()<.5?th.star1:th.star2;
+    bgCtx2.fillStyle=`rgba(${col},${a})`;
     bgCtx2.beginPath();bgCtx2.arc(x,y,r,0,Math.PI*2);bgCtx2.fill();
   }
+
   bgCtx2.save();bgCtx2.lineCap='round';bgCtx2.lineJoin='round';
-  bgCtx2.strokeStyle='rgba(124,58,237,.08)';bgCtx2.lineWidth=60;
+  bgCtx2.strokeStyle=`rgba(${th.pathGlow},.08)`;bgCtx2.lineWidth=60;
   bgCtx2.beginPath();bgCtx2.moveTo(PATH[0].x,PATH[0].y);
   PATH.forEach((p,i)=>{if(i)bgCtx2.lineTo(p.x,p.y);});bgCtx2.stroke();
-  bgCtx2.strokeStyle='rgba(30,16,64,.98)';bgCtx2.lineWidth=44;
+  bgCtx2.strokeStyle=`rgba(${th.dirt},.98)`;bgCtx2.lineWidth=44;
   bgCtx2.beginPath();bgCtx2.moveTo(PATH[0].x,PATH[0].y);
   PATH.forEach((p,i)=>{if(i)bgCtx2.lineTo(p.x,p.y);});bgCtx2.stroke();
-  bgCtx2.strokeStyle='rgba(124,58,237,.18)';bgCtx2.lineWidth=40;bgCtx2.setLineDash([24,16]);
+  bgCtx2.strokeStyle=`rgba(${th.dash},.18)`;bgCtx2.lineWidth=40;bgCtx2.setLineDash([24,16]);
   bgCtx2.beginPath();bgCtx2.moveTo(PATH[0].x,PATH[0].y);
   PATH.forEach((p,i)=>{if(i)bgCtx2.lineTo(p.x,p.y);});bgCtx2.stroke();
   bgCtx2.setLineDash([]);bgCtx2.restore();

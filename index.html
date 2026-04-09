@@ -617,7 +617,7 @@ function setDiff(d,el){diff=d;document.querySelectorAll('#diff-row .opt-btn').fo
 
 function startGame(){
   document.getElementById('overlay').style.display='none';
-  gs='playing';coins=100;score=0;hearts=20;wave=1;playerXP=0;playerLevel=1;
+  gs='playing';coins=250;score=0;hearts=20;wave=1;playerXP=0;playerLevel=1;
   enemies=[];towers=[];bullets=[];parts=[];streak=0;
   if(!audioCtx){
     try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();audioCtx.resume();}catch(e){}
@@ -625,7 +625,7 @@ function startGame(){
   updateUI();updateXPBar();renderShop();
   stopMusic();
   startMusic();
-  showWave(wave,()=>startLearn());
+  showWave(wave,()=>{if(wave===1)startWave2();else startLearn();});
   if(animId)cancelAnimationFrame(animId);
   last=performance.now();
   gameLoop(last);
@@ -641,7 +641,7 @@ function getVocab(){return VOCAB[lang][diff];}
 function startLearn(){
   const pool=[...getVocab()];
   for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
-  const count=Math.min(4+Math.floor(wave/2),8);
+  const count=Math.min(2+Math.floor(wave/3),4);
   learnWords=pool.slice(0,count);learnIdx=0;
   showLearnCard();
 }
@@ -655,6 +655,7 @@ function showLearnCard(){
   document.getElementById('lc-meaning').textContent=w.m;
   document.getElementById('lc-prog').textContent=`Word ${learnIdx+1} of ${learnWords.length}`;
   document.getElementById('lc-next').textContent=learnIdx<learnWords.length-1?'Got it →':'Start Quiz →';
+  setTimeout(()=>nextLearn(),1800);
 }
 
 function speakLearn(){speak(learnWords[learnIdx].w);}
@@ -679,6 +680,7 @@ function nextLearn(){
 }
 
 function startQuiz(){
+  if(wave%2===0){startWave2();return;}
   qLeft=learnWords.length;
   qWords=[...learnWords];
   for(let i=qWords.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[qWords[i],qWords[j]]=[qWords[j],qWords[i]];}
@@ -731,7 +733,7 @@ function answer(ans,btn){
   }
   document.getElementById('q-streak').textContent=streak>1?`${streak} streak 🔥`:'';
   qLeft--;
-  setTimeout(showQ,1400);
+  setTimeout(showQ,900);
 }
 
 function addXP(amount){
@@ -778,7 +780,7 @@ function renderShop(){
   });
 }
 
-function startWave2(){waveOn=true;spawnLeft=6+wave*3;spawnTimer=0;spawnIdx=0;}
+function startWave2(){waveOn=true;spawnLeft=8+wave*4;spawnTimer=0;spawnIdx=0;}
 
 function spawnE(dt){
   if(!waveOn||spawnIdx>=spawnLeft)return;
@@ -823,7 +825,7 @@ function updE(dt){
     waveOn=false;wave++;
     addXP(15+wave*3);
     updateUI();
-    showWave(wave,()=>startLearn());
+    showWave(wave,()=>{if(wave===1)startWave2();else startLearn();});
   }
 }
 
@@ -1087,6 +1089,7 @@ function updateUI(){
 }
 
 function gameOver(){
+  saveProgress();
   gs='gameover';
   document.getElementById('go').style.display='flex';
   document.getElementById('go-stats').innerHTML=`Wave ${wave}<br>Score ${score}<br>Level ${playerLevel}`;
@@ -1147,9 +1150,29 @@ function toggleMusic(){
   }
 }
 
+  function saveProgress(){
+  localStorage.setItem('babel_save',JSON.stringify({
+    playerLevel,playerXP,wave,coins,score,lang,diff
+  }));
+}
+
+function loadProgress(){
+  try{
+    const s=JSON.parse(localStorage.getItem('babel_save'));
+    if(s){
+      playerLevel=s.playerLevel||1;
+      playerXP=s.playerXP||0;
+      wave=s.wave||1;
+      coins=s.coins||250;
+      lang=s.lang||'korean';
+      diff=s.diff||'basic';
+    }
+  }catch(e){}
+}
 window.addEventListener('resize',()=>{initCanvas();});
 if(window.speechSynthesis)window.speechSynthesis.getVoices();
-initCanvas();
+loadProgress();
+  initCanvas();
 </script>
 </body>
 </html>

@@ -157,6 +157,12 @@ canvas{position:absolute;top:0;left:0}
         <button class="opt-btn" onclick="setDiff('intermediate',this)">🛡️ Intermediate</button>
         <button class="opt-btn" onclick="setDiff('fluent',this)">👑 Fluent</button>
       </div>
+      <div class="section-title">Choose Map</div>
+<div id="map-row" style="display:flex;gap:8px;justify-content:center;margin-bottom:20px">
+  <button class="opt-btn on" onclick="setMap(0,this)">🗺️ Crossing</button>
+  <button class="opt-btn" onclick="setMap(1,this)">🌀 Spiral</button>
+  <button class="opt-btn" onclick="setMap(2,this)">⚔️ Gauntlet</button>
+</div>
       <button id="playbtn" onclick="startGame()">BEGIN QUEST</button>
     </div>
   </div>
@@ -522,7 +528,7 @@ const PLAYER_LEVELS=[0,50,120,220,360,550,800,1100,1500,2000,2700,3500,4500,5800
 const ENEMY_COLS=['#6366f1','#ec4899','#f59e0b','#ef4444','#10b981','#8b5cf6','#06b6d4'];
 const TOWER_ICONS={ranger:'🏹',spark:'⚡',sage:'🧊',bomber:'💣',phantom:'👁️',alchemist:'⚗️',warlord:'⚔️',sorcerer:'🔮',dragon:'🐉'};
 
-let mc,bgc2,ctx2,bgCtx2,W,H,PATH=[];
+let mc,bgc2,ctx2,bgCtx2,W,H,PATH=[],currentMap=0;
 let lang='korean',diff='basic';
 let coins=100,score=0,hearts=20,wave=1;
 let playerXP=0,playerLevel=1;
@@ -535,13 +541,28 @@ let waveOn=false,spawnLeft=0,spawnTimer=0,spawnIdx=0;
 let last=0,animId=null,gs='start';
 let audioCtx=null,musicOn=true,musicTimer=null;
 
-function makePath(W,H){
-  return[
+const MAPS=[
+  {name:'The Crossing',points:(W,H)=>[
     {x:-60,y:H*.26},{x:W*.11,y:H*.26},{x:W*.11,y:H*.63},
     {x:W*.32,y:H*.63},{x:W*.32,y:H*.16},{x:W*.56,y:H*.16},
     {x:W*.56,y:H*.52},{x:W*.74,y:H*.52},{x:W*.74,y:H*.3},
     {x:W*.91,y:H*.3},{x:W+60,y:H*.3}
-  ];
+  ]},
+  {name:'The Spiral',points:(W,H)=>[
+    {x:-60,y:H*.5},{x:W*.15,y:H*.5},{x:W*.15,y:H*.2},
+    {x:W*.5,y:H*.2},{x:W*.5,y:H*.8},{x:W*.3,y:H*.8},
+    {x:W*.3,y:H*.4},{x:W*.65,y:H*.4},{x:W*.65,y:H*.65},
+    {x:W*.85,y:H*.65},{x:W+60,y:H*.65}
+  ]},
+  {name:'The Gauntlet',points:(W,H)=>[
+    {x:-60,y:H*.15},{x:W*.9,y:H*.15},{x:W*.9,y:H*.4},
+    {x:W*.1,y:H*.4},{x:W*.1,y:H*.65},{x:W*.9,y:H*.65},
+    {x:W*.9,y:H*.85},{x:W+60,y:H*.85}
+  ]}
+];
+
+function makePath(W,H){
+  return MAPS[currentMap].points(W,H);
 }
 
 function initCanvas(){
@@ -612,6 +633,7 @@ function drawBG(){
   bgCtx2.setLineDash([]);bgCtx2.restore();
 }
 
+  function setMap(m,el){currentMap=m;document.querySelectorAll('#map-row .opt-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
 function setLang(l,el){lang=l;document.querySelectorAll('#lang-row .opt-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
 function setDiff(d,el){diff=d;document.querySelectorAll('#diff-row .opt-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
 
@@ -1152,7 +1174,7 @@ function toggleMusic(){
 
   function saveProgress(){
   localStorage.setItem('babel_save',JSON.stringify({
-    playerLevel,playerXP,wave,coins,score,lang,diff
+    playerLevel,playerXP,wave,coins,score,lang,diff,currentMap
   }));
 }
 
@@ -1166,6 +1188,7 @@ function loadProgress(){
       coins=s.coins||250;
       lang=s.lang||'korean';
       diff=s.diff||'basic';
+      currentMap=s.currentMap||0;
     }
   }catch(e){}
 }

@@ -110,7 +110,7 @@ canvas{position:absolute;top:0;left:0}
   <div id="hint">Click off the path to place</div>
   <div id="wave-flash"></div>
  <div id="music-btn" onclick="toggleMusic()">🎵</div>
-<div id="pause-btn" onclick="togglePause()" style="position:absolute;top:10px;right:52px;z-index:15;background:rgba(0,0,0,0.5);border:1.5px solid rgba(255,255,255,0.12);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px">⏸️</div>
+<div id="pause-btn" onclick="openPauseMenu()" style="position:absolute;top:10px;right:52px;z-index:15;background:rgba(0,0,0,0.5);border:1.5px solid rgba(255,255,255,0.12);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px">⏸️</div>
   <div id="notif"></div>
 
   <div id="shop">
@@ -205,6 +205,34 @@ canvas{position:absolute;top:0;left:0}
     </div>
   </div>
 
+  <div id="pause-menu" style="display:none;position:absolute;inset:0;z-index:48;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;flex-direction:column;gap:0">
+    <div style="background:linear-gradient(135deg,#0d0a1a,#1e1040);border:2px solid rgba(124,58,237,0.4);border-radius:24px;padding:32px 40px;max-width:420px;width:92%;text-align:center;box-shadow:0 0 80px rgba(124,58,237,0.2)">
+      <div style="font-family:'Cinzel',sans-serif;font-size:32px;letter-spacing:4px;color:#a78bfa;margin-bottom:4px">PAUSED</div>
+      <div style="font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-bottom:24px">Wave <span id="pm-wave">1</span> · Score <span id="pm-score">0</span></div>
+
+      <div style="background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;margin-bottom:18px;text-align:left">
+        <div style="font-family:'Cinzel',sans-serif;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-bottom:12px">Current Run</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span style="color:rgba(255,255,255,0.5)">Map</span><span id="pm-map" style="color:#a78bfa;font-weight:700">The Crossing</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span style="color:rgba(255,255,255,0.5)">Language</span><span id="pm-lang" style="color:#a78bfa;font-weight:700">Korean</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span style="color:rgba(255,255,255,0.5)">Difficulty</span><span id="pm-diff" style="color:#a78bfa;font-weight:700">Basic</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span style="color:rgba(255,255,255,0.5)">Level</span><span id="pm-lvl" style="color:#f1c40f;font-weight:700">1</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:rgba(255,255,255,0.5)">Gold</span><span id="pm-gold" style="color:#f1c40f;font-weight:700">250</span></div>
+      </div>
+
+      <div style="background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;margin-bottom:18px;text-align:left">
+        <div style="font-family:'Cinzel',sans-serif;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-bottom:12px">Best Saves</div>
+        <div id="pm-saves" style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.8"></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button onclick="closePauseMenu()" style="background:linear-gradient(135deg,#7c3aed,#db2777);border:none;border-radius:50px;padding:12px;font-family:'Cinzel',sans-serif;font-size:16px;letter-spacing:2px;color:#fff;cursor:pointer;width:100%">▶ RESUME</button>
+        <div style="display:flex;gap:10px">
+          <button id="pm-sound-btn" onclick="toggleSoundPause()" style="flex:1;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.15);border-radius:50px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:#fff;cursor:pointer">🎵 Sound On</button>
+          <button onclick="goToMainMenu()" style="flex:1;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.15);border-radius:50px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:#e74c3c;cursor:pointer">🏠 Main Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <div id="go">
     <h2>DEFEATED</h2>
     <p class="stats" id="go-stats"></p>
@@ -230,11 +258,11 @@ if(!CanvasRenderingContext2D.prototype.roundRect){
 const VOCAB={
   korean:{
     basic:[
-      {w:'안녕',r:'annyeong',m:'Hi',x:['Bye','Thanks','Sorry']},
-      {w:'네',r:'ne',m:'Yes',x:['No','Maybe','Please']},
-      {w:'아니요',r:'aniyo',m:'No',x:['Yes','Maybe','Okay']},
-      {w:'물',r:'mul',m:'Water',x:['Food','Fire','Air']},
-      {w:'밥',r:'bap',m:'Rice',x:['Bread','Soup','Meat']},
+     {w:'안녕',r:'annyeong',m:'Hi',x:['Goodbye','See you','Take care']},
+      {w:'네',r:'ne',m:'Yes',x:['No','Maybe','Of course']},
+      {w:'아니요',r:'aniyo',m:'No',x:['Yes','Never','Not yet']},
+      {w:'물',r:'mul',m:'Water',x:['Juice','Milk','Tea']},
+      {w:'밥',r:'bap',m:'Rice',x:['Noodles','Bread','Porridge']},
       {w:'나',r:'na',m:'I / Me',x:['You','They','We']},
       {w:'집',r:'jip',m:'Home',x:['School','Store','Park']},
       {w:'돈',r:'don',m:'Money',x:['Time','Food','Work']},
@@ -242,14 +270,14 @@ const VOCAB={
       {w:'뭐',r:'mwo',m:'What',x:['Who','Where','When']},
       {w:'어디',r:'eodi',m:'Where',x:['When','Why','What']},
       {w:'이거',r:'igeo',m:'This',x:['That','Here','There']},
-      {w:'좋아',r:'joha',m:'Good / Like',x:['Bad','Hate','Sad']},
-      {w:'싫어',r:'shireo',m:'Dislike',x:['Like','Love','Want']},
+      {w:'좋아',r:'joha',m:'Good / Like',x:['Hate','Dislike','Despise']},
+      {w:'싫어',r:'shireo',m:'Dislike',x:['Like','Enjoy','Adore']},
       {w:'배',r:'bae',m:'Stomach',x:['Head','Hand','Foot']},
       {w:'눈',r:'nun',m:'Eye / Snow',x:['Ear','Nose','Mouth']},
       {w:'손',r:'son',m:'Hand',x:['Foot','Head','Nose']},
       {w:'물고기',r:'mulgogi',m:'Fish',x:['Bird','Cat','Dog']},
-      {w:'고양이',r:'goyangi',m:'Cat',x:['Dog','Bird','Fish']},
-      {w:'개',r:'gae',m:'Dog',x:['Cat','Bird','Fish']},
+     {w:'고양이',r:'goyangi',m:'Cat',x:['Rabbit','Hamster','Squirrel']},
+      {w:'개',r:'gae',m:'Dog',x:['Wolf','Fox','Bear']},
       {w:'사람',r:'saram',m:'Person',x:['Animal','Thing','Place']},
       {w:'친구',r:'chingu',m:'Friend',x:['Enemy','Teacher','Stranger']},
       {w:'음식',r:'eumsik',m:'Food',x:['Water','Drink','Medicine']},
@@ -402,20 +430,27 @@ const UPGRADES={
       {name:'All-Seeing',desc:'Unlimited range',cost:500,effect:{range:9999}},
     ]},
     {name:'Lethality',levels:[
-      {name:'Sharp Arrows',desc:'+20 damage',cost:70,effect:{dmg:20}},
-      {name:'Barbed Tips',desc:'+50 damage',cost:120,effect:{dmg:50}},
-      {name:'Poison Coat',desc:'+100 damage',cost:200,effect:{dmg:100}},
-      {name:'Soul Pierce',desc:'+200 damage',cost:350,effect:{dmg:200}},
-      {name:'Annihilator',desc:'+500 damage',cost:600,effect:{dmg:500}},
+      {name:'Sharp Arrows',desc:'+20 dmg',cost:70,effect:{dmg:20}},
+      {name:'Barbed Tips',desc:'+50 dmg',cost:120,effect:{dmg:50}},
+      {name:'Poison Coat',desc:'+100 dmg',cost:200,effect:{dmg:100}},
+      {name:'Soul Pierce',desc:'+200 dmg',cost:350,effect:{dmg:200}},
+      {name:'Annihilator',desc:'+500 dmg',cost:600,effect:{dmg:500}},
+    ]},
+    {name:'Tempo',levels:[
+      {name:'Quick Draw',desc:'-150ms',cost:65,effect:{rate:-150}},
+      {name:'Rapid Fire',desc:'-250ms',cost:115,effect:{rate:-250}},
+      {name:'Bullet Hail',desc:'-350ms',cost:200,effect:{rate:-350}},
+      {name:'Storm Shot',desc:'-450ms',cost:340,effect:{rate:-450}},
+      {name:'Infinite Quiver',desc:'-600ms',cost:560,effect:{rate:-600}},
     ]},
   ],
   spark:[
     {name:'Speed',levels:[
-      {name:'Faster Charge',desc:'-100ms rate',cost:70,effect:{rate:-100}},
-      {name:'Overclock',desc:'-150ms rate',cost:120,effect:{rate:-150}},
-      {name:'Hyper Speed',desc:'-50ms rate',cost:200,effect:{rate:-50}},
-      {name:'Bullet Time',desc:'-30ms rate',cost:350,effect:{rate:-30}},
-      {name:'Infinite Storm',desc:'-20ms rate',cost:550,effect:{rate:-20}},
+      {name:'Faster Charge',desc:'-100ms',cost:70,effect:{rate:-100}},
+      {name:'Overclock',desc:'-150ms',cost:120,effect:{rate:-150}},
+      {name:'Hyper Speed',desc:'-200ms',cost:200,effect:{rate:-200}},
+      {name:'Bullet Time',desc:'-250ms',cost:350,effect:{rate:-250}},
+      {name:'Infinite Storm',desc:'-300ms',cost:550,effect:{rate:-300}},
     ]},
     {name:'Chain',levels:[
       {name:'Chain Lightning',desc:'Splash 40',cost:80,effect:{splash:40}},
@@ -423,6 +458,13 @@ const UPGRADES={
       {name:'Thunder God',desc:'Splash 140',cost:240,effect:{splash:140}},
       {name:'Zeus Wrath',desc:'Splash 220',cost:400,effect:{splash:220}},
       {name:'Storm Lord',desc:'Splash 350',cost:650,effect:{splash:350}},
+    ]},
+    {name:'Power',levels:[
+      {name:'Charged',desc:'+15 dmg',cost:75,effect:{dmg:15}},
+      {name:'High Voltage',desc:'+35 dmg',cost:130,effect:{dmg:35}},
+      {name:'Overload',desc:'+70 dmg',cost:220,effect:{dmg:70}},
+      {name:'Thunderstrike',desc:'+130 dmg',cost:380,effect:{dmg:130}},
+      {name:'God Bolt',desc:'+250 dmg',cost:620,effect:{dmg:250}},
     ]},
   ],
   sage:[
@@ -434,11 +476,18 @@ const UPGRADES={
       {name:'Time Stop',desc:'Slow +35%',cost:520,effect:{slow:0.35}},
     ]},
     {name:'Damage',levels:[
-      {name:'Ice Shards',desc:'+20 damage',cost:70,effect:{dmg:20}},
-      {name:'Blizzard',desc:'+50 damage',cost:120,effect:{dmg:50}},
-      {name:'Glacier',desc:'+100 damage',cost:200,effect:{dmg:100}},
+      {name:'Ice Shards',desc:'+20 dmg',cost:70,effect:{dmg:20}},
+      {name:'Blizzard',desc:'+50 dmg',cost:120,effect:{dmg:50}},
+      {name:'Glacier',desc:'+100 dmg',cost:200,effect:{dmg:100}},
       {name:'Ice Age',desc:'Splash 80',cost:350,effect:{splash:80}},
       {name:'Extinction',desc:'Splash 180',cost:580,effect:{splash:180}},
+    ]},
+    {name:'Range',levels:[
+      {name:'Far Sight',desc:'+25 range',cost:60,effect:{range:25}},
+      {name:'Cryo Field',desc:'+50 range',cost:110,effect:{range:50}},
+      {name:'Frost Reach',desc:'+90 range',cost:200,effect:{range:90}},
+      {name:'Polar Aura',desc:'+140 range',cost:340,effect:{range:140}},
+      {name:'Omnifrost',desc:'+220 range',cost:560,effect:{range:220}},
     ]},
   ],
   bomber:[
@@ -450,11 +499,18 @@ const UPGRADES={
       {name:'Armageddon',desc:'Splash +400',cost:700,effect:{splash:400}},
     ]},
     {name:'Power',levels:[
-      {name:'More TNT',desc:'+40 damage',cost:90,effect:{dmg:40}},
-      {name:'C4',desc:'+90 damage',cost:160,effect:{dmg:90}},
-      {name:'Semtex',desc:'+180 damage',cost:280,effect:{dmg:180}},
-      {name:'Anti-Matter',desc:'+350 damage',cost:480,effect:{dmg:350}},
-      {name:'Reality Ender',desc:'+700 damage',cost:800,effect:{dmg:700}},
+      {name:'More TNT',desc:'+40 dmg',cost:90,effect:{dmg:40}},
+      {name:'C4',desc:'+90 dmg',cost:160,effect:{dmg:90}},
+      {name:'Semtex',desc:'+180 dmg',cost:280,effect:{dmg:180}},
+      {name:'Anti-Matter',desc:'+350 dmg',cost:480,effect:{dmg:350}},
+      {name:'Reality Ender',desc:'+700 dmg',cost:800,effect:{dmg:700}},
+    ]},
+    {name:'Fire Rate',levels:[
+      {name:'Quick Fuse',desc:'-200ms',cost:85,effect:{rate:-200}},
+      {name:'Auto Loader',desc:'-350ms',cost:155,effect:{rate:-350}},
+      {name:'Rapid Deploy',desc:'-500ms',cost:270,effect:{rate:-500}},
+      {name:'Barrage',desc:'-650ms',cost:460,effect:{rate:-650}},
+      {name:'Infinite Bombs',desc:'-800ms',cost:750,effect:{rate:-800}},
     ]},
   ],
   phantom:[
@@ -472,6 +528,13 @@ const UPGRADES={
       {name:'Instant Kill',desc:'+700 dmg',cost:580,effect:{dmg:700}},
       {name:'Soul Reaper',desc:'+1500 dmg',cost:950,effect:{dmg:1500}},
     ]},
+    {name:'Range',levels:[
+      {name:'Long Shadow',desc:'+50 range',cost:95,effect:{range:50}},
+      {name:'Far Reach',desc:'+100 range',cost:170,effect:{range:100}},
+      {name:'Void Step',desc:'+180 range',cost:290,effect:{range:180}},
+      {name:'Astral',desc:'+300 range',cost:490,effect:{range:300}},
+      {name:'Omnipresent',desc:'+9999 range',cost:800,effect:{range:9999}},
+    ]},
   ],
   alchemist:[
     {name:'Toxin',levels:[
@@ -488,14 +551,21 @@ const UPGRADES={
       {name:'Hellfire',desc:'Splash +150',cost:460,effect:{splash:150}},
       {name:'Inferno',desc:'Splash +280',cost:750,effect:{splash:280}},
     ]},
+    {name:'Brew Speed',levels:[
+      {name:'Quick Mix',desc:'-100ms',cost:85,effect:{rate:-100}},
+      {name:'Fast Brew',desc:'-200ms',cost:150,effect:{rate:-200}},
+      {name:'Instant Pour',desc:'-300ms',cost:260,effect:{rate:-300}},
+      {name:'Auto Flask',desc:'-400ms',cost:440,effect:{rate:-400}},
+      {name:'Overflow',desc:'-500ms',cost:720,effect:{rate:-500}},
+    ]},
   ],
   warlord:[
     {name:'Berserker',levels:[
-      {name:'Rage',desc:'-200ms rate',cost:100,effect:{rate:-200}},
-      {name:'Frenzy',desc:'-300ms rate',cost:180,effect:{rate:-300}},
-      {name:'Blood Lust',desc:'-400ms rate',cost:300,effect:{rate:-400}},
-      {name:'Unstoppable',desc:'-500ms rate',cost:500,effect:{rate:-500}},
-      {name:'God of War',desc:'-600ms rate',cost:850,effect:{rate:-600}},
+      {name:'Rage',desc:'-200ms',cost:100,effect:{rate:-200}},
+      {name:'Frenzy',desc:'-300ms',cost:180,effect:{rate:-300}},
+      {name:'Blood Lust',desc:'-400ms',cost:300,effect:{rate:-400}},
+      {name:'Unstoppable',desc:'-500ms',cost:500,effect:{rate:-500}},
+      {name:'God of War',desc:'-600ms',cost:850,effect:{rate:-600}},
     ]},
     {name:'Devastation',levels:[
       {name:'Heavy Blade',desc:'+100 dmg',cost:110,effect:{dmg:100}},
@@ -503,6 +573,13 @@ const UPGRADES={
       {name:'Cleave',desc:'Splash 100',cost:350,effect:{splash:100}},
       {name:'Earthquake',desc:'Splash 200',cost:580,effect:{splash:200}},
       {name:'World Ender',desc:'Splash 400',cost:950,effect:{splash:400}},
+    ]},
+    {name:'Fortitude',levels:[
+      {name:'Iron Skin',desc:'+30 range',cost:105,effect:{range:30}},
+      {name:'War Stance',desc:'+60 range',cost:190,effect:{range:60}},
+      {name:'Battlefield',desc:'+100 range',cost:320,effect:{range:100}},
+      {name:'Dominion',desc:'+160 range',cost:540,effect:{range:160}},
+      {name:'Warlord Aura',desc:'+250 range',cost:880,effect:{range:250}},
     ]},
   ],
   sorcerer:[
@@ -520,6 +597,13 @@ const UPGRADES={
       {name:'Void Storm',desc:'Splash +200',cost:680,effect:{splash:200}},
       {name:'Big Bang',desc:'Splash +400',cost:1100,effect:{splash:400}},
     ]},
+    {name:'Cooldown',levels:[
+      {name:'Mana Regen',desc:'-200ms',cost:125,effect:{rate:-200}},
+      {name:'Flow State',desc:'-350ms',cost:220,effect:{rate:-350}},
+      {name:'Arcane Haste',desc:'-500ms',cost:380,effect:{rate:-500}},
+      {name:'Time Warp',desc:'-700ms',cost:640,effect:{rate:-700}},
+      {name:'Instant Cast',desc:'-900ms',cost:1050,effect:{rate:-900}},
+    ]},
   ],
   dragon:[
     {name:'Inferno',levels:[
@@ -535,6 +619,13 @@ const UPGRADES={
       {name:'Titan Rage',desc:'+750 dmg',cost:600,effect:{dmg:750}},
       {name:'God Slayer',desc:'+1400 dmg',cost:1000,effect:{dmg:1400}},
       {name:'Universe Ender',desc:'+3000 dmg',cost:1800,effect:{dmg:3000}},
+    ]},
+    {name:'Wing Speed',levels:[
+      {name:'Swift Wings',desc:'-200ms',cost:190,effect:{rate:-200}},
+      {name:'Gale Force',desc:'-350ms',cost:340,effect:{rate:-350}},
+      {name:'Windstrike',desc:'-500ms',cost:570,effect:{rate:-500}},
+      {name:'Tempest',desc:'-700ms',cost:950,effect:{rate:-700}},
+      {name:'Eternal Flight',desc:'-900ms',cost:1600,effect:{rate:-900}},
     ]},
   ],
 };
@@ -562,7 +653,7 @@ let qWords=[],qCur=null,streak=0,qLeft=0;
 let waveOn=false,spawnLeft=0,spawnTimer=0,spawnIdx=0;
 let last=0,animId=null,gs='start';
 let audioCtx=null,musicOn=true,musicTimer=null,paused=false;
-
+let beams=[];
 const MAPS=[
   {name:'The Crossing',points:(W,H)=>[
     {x:-60,y:H*.26},{x:W*.11,y:H*.26},{x:W*.11,y:H*.63},
@@ -662,7 +753,7 @@ function setDiff(d,el){diff=d;document.querySelectorAll('#diff-row .opt-btn').fo
 function startGame(){
   document.getElementById('overlay').style.display='none';
   gs='playing';coins=250;score=0;hearts=20;wave=1;playerXP=0;playerLevel=1;
-  enemies=[];towers=[];bullets=[];parts=[];streak=0;usedWords=[];
+enemies=[];towers=[];bullets=[];parts=[];beams=[];streak=0;usedWords=[];
   if(!audioCtx){
     try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();audioCtx.resume();}catch(e){}
   }
@@ -749,10 +840,15 @@ function showQ(){
   document.getElementById('q-feedback').textContent='';
   document.getElementById('q-prog').textContent=`${learnWords.length-qLeft+1} of ${learnWords.length}`;
   const pool=getVocab();
+  // prefer distractors from same vocab pool that share word-length or category proximity
   const wrongs=[...qCur.x];
-  pool.forEach(v=>{if(v.m!==qCur.m&&wrongs.indexOf(v.m)<0)wrongs.push(v.m);});
+  // fill with other vocab meanings of similar length to the correct answer
+  const correct=qCur.m;
+  const similar=pool.filter(v=>v.m!==correct&&wrongs.indexOf(v.m)<0)
+    .sort((a,b)=>Math.abs(a.m.length-correct.length)-Math.abs(b.m.length-correct.length));
+  similar.forEach(v=>{if(wrongs.indexOf(v.m)<0)wrongs.push(v.m);});
   for(let i=wrongs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[wrongs[i],wrongs[j]]=[wrongs[j],wrongs[i]];}
-  const ch=[qCur.m,...wrongs.slice(0,3)].sort(()=>Math.random()-.5);
+  const ch=[correct,...wrongs.slice(0,3)].sort(()=>Math.random()-.5);
   const ce=document.getElementById('q-choices');ce.innerHTML='';
   ch.forEach(c=>{
     const b=document.createElement('button');b.className='cbtn';b.textContent=c;
@@ -911,8 +1007,108 @@ function getTowerStats(t){
 function updT(dt){
   towers.forEach(t=>{
     t.cd=(t.cd||0)-dt;
-    if(t.cd>0)return;
     const stats=getTowerStats(t);
+
+    // sage: aura — damages all enemies in range every tick, no bullet
+    if(t.type==='sage'){
+      if(t.cd<=0){
+        t.cd=stats.rate;
+        enemies.forEach(e=>{
+          const dx=e.x-t.x,dy=e.y-t.y;
+          if(Math.sqrt(dx*dx+dy*dy)<=stats.range){
+            e.hp-=stats.dmg*0.4;
+            if(stats.slow>0){e.slow=1-stats.slow;e.slowT=800;}
+            spawnParts(e.x,e.y,stats.col,2);
+          }
+        });
+        // visual pulse ring
+        beams.push({x:t.x,y:t.y,r:0,maxR:stats.range,col:stats.col,life:1,type:'ring'});
+      }
+      return;
+    }
+
+    // alchemist: lobbed arc shot — slower bullet, big splash on land
+    if(t.type==='alchemist'){
+      if(t.cd>0)return;
+      let tgt=null,best=-1;
+      enemies.forEach(e=>{
+        const dx=e.x-t.x,dy=e.y-t.y;
+        if(Math.sqrt(dx*dx+dy*dy)<=stats.range&&e.pi>best){best=e.pi;tgt=e;}
+      });
+      if(tgt){
+        t.cd=stats.rate;
+        bullets.push({x:t.x,y:t.y,tgt:tgt,spd:180,dmg:stats.dmg,col:stats.col,splash:Math.max(stats.splash,60),slow:stats.slow,sz:10,twrRef:t,arc:true,arcH:0});
+      }
+      return;
+    }
+
+    // phantom: instant beam — no travel time, just flashes damage
+    if(t.type==='phantom'){
+      if(t.cd>0)return;
+      const multi=stats.multi||1;
+      const inRange=enemies.filter(e=>{
+        const dx=e.x-t.x,dy=e.y-t.y;
+        return Math.sqrt(dx*dx+dy*dy)<=stats.range;
+      }).sort((a,b)=>b.pi-a.pi).slice(0,multi);
+      if(inRange.length){
+        t.cd=stats.rate;
+        inRange.forEach(e=>{
+          e.hp-=stats.dmg;
+          spawnParts(e.x,e.y,stats.col,8);
+          beams.push({x1:t.x,y1:t.y,x2:e.x,y2:e.y,col:stats.col,life:1,type:'beam'});
+        });
+      }
+      return;
+    }
+
+    // warlord: shockwave — damages all in range, slow pulse, no targeting
+    if(t.type==='warlord'){
+      if(t.cd>0)return;
+      let hit=false;
+      enemies.forEach(e=>{
+        const dx=e.x-t.x,dy=e.y-t.y;
+        if(Math.sqrt(dx*dx+dy*dy)<=stats.range){
+          e.hp-=stats.dmg;
+          spawnParts(e.x,e.y,stats.col,3);
+          hit=true;
+        }
+      });
+      if(hit||enemies.length>0){
+        t.cd=stats.rate;
+        beams.push({x:t.x,y:t.y,r:0,maxR:stats.range,col:stats.col,life:1,type:'ring'});
+      }
+      return;
+    }
+
+    // dragon: cone fire — hits all enemies in a forward cone
+    if(t.type==='dragon'){
+      if(t.cd>0)return;
+      let tgt=null,best=-1;
+      enemies.forEach(e=>{
+        const dx=e.x-t.x,dy=e.y-t.y;
+        if(Math.sqrt(dx*dx+dy*dy)<=stats.range&&e.pi>best){best=e.pi;tgt=e;}
+      });
+      if(tgt){
+        t.cd=stats.rate;
+        const ang=Math.atan2(tgt.y-t.y,tgt.x-t.x);
+        enemies.forEach(e=>{
+          const dx=e.x-t.x,dy=e.y-t.y;
+          const dist=Math.sqrt(dx*dx+dy*dy);
+          const eAng=Math.atan2(dy,dx);
+          let diff=Math.abs(ang-eAng);
+          if(diff>Math.PI)diff=Math.PI*2-diff;
+          if(dist<=stats.range&&diff<0.6){
+            e.hp-=stats.dmg;
+            spawnParts(e.x,e.y,stats.col,5);
+          }
+        });
+        beams.push({x:t.x,y:t.y,ang,spread:0.6,range:stats.range,col:stats.col,life:1,type:'cone'});
+      }
+      return;
+    }
+
+    // default: all others shoot bullets (ranger, spark, bomber, sorcerer)
+    if(t.cd>0)return;
     let tgt=null,best=-1;
     enemies.forEach(e=>{
       const dx=e.x-t.x,dy=e.y-t.y;
@@ -974,6 +1170,13 @@ function spawnParts(x,y,col,n){
   }
 }
 
+  function updBeams(dt){
+  for(let i=beams.length-1;i>=0;i--){
+    beams[i].life-=dt/300;
+    if(beams[i].type==='ring')beams[i].r+=dt*0.8;
+    if(beams[i].life<=0)beams.splice(i,1);
+  }
+}
 function updP(dt){
   for(let i=parts.length-1;i>=0;i--){
     const p=parts[i];
@@ -1243,6 +1446,22 @@ function draw2(){
     ctx2.beginPath();ctx2.arc(b.x,b.y,b.sz,0,Math.PI*2);
     ctx2.fillStyle=b.col;ctx2.fill();ctx2.restore();
   });
+  beams.forEach(b=>{
+    ctx2.save();ctx2.globalAlpha=Math.max(0,b.life)*0.7;
+    if(b.type==='ring'){
+      ctx2.strokeStyle=b.col;ctx2.lineWidth=3;ctx2.shadowColor=b.col;ctx2.shadowBlur=12;
+      ctx2.beginPath();ctx2.arc(b.x,b.y,b.r,0,Math.PI*2);ctx2.stroke();
+    } else if(b.type==='beam'){
+      ctx2.strokeStyle=b.col;ctx2.lineWidth=2;ctx2.shadowColor=b.col;ctx2.shadowBlur=16;
+      ctx2.beginPath();ctx2.moveTo(b.x1,b.y1);ctx2.lineTo(b.x2,b.y2);ctx2.stroke();
+    } else if(b.type==='cone'){
+      ctx2.fillStyle=b.col+'55';ctx2.shadowColor=b.col;ctx2.shadowBlur=20;
+      ctx2.beginPath();ctx2.moveTo(b.x,b.y);
+      ctx2.arc(b.x,b.y,b.range,b.ang-b.spread,b.ang+b.spread);
+      ctx2.closePath();ctx2.fill();
+    }
+    ctx2.restore();
+  });
   parts.forEach(p=>{
     ctx2.globalAlpha=Math.max(0,p.life);
     ctx2.beginPath();ctx2.arc(p.x,p.y,p.sz,0,Math.PI*2);
@@ -1256,11 +1475,72 @@ function togglePause(){
   document.getElementById('pause-btn').textContent=paused?'▶️':'⏸️';
 }
 
+function openPauseMenu(){
+  paused=true;
+  document.getElementById('pause-btn').textContent='▶️';
+  // fill in current run info
+  document.getElementById('pm-wave').textContent=wave;
+  document.getElementById('pm-score').textContent=score;
+  document.getElementById('pm-map').textContent=MAPS[currentMap].name;
+  document.getElementById('pm-lang').textContent=lang==='korean'?'🇰🇷 Korean':'🇯🇵 Japanese';
+  document.getElementById('pm-diff').textContent=diff.charAt(0).toUpperCase()+diff.slice(1);
+  document.getElementById('pm-lvl').textContent=playerLevel;
+  document.getElementById('pm-gold').textContent=coins;
+  document.getElementById('pm-sound-btn').textContent=musicOn?'🎵 Sound On':'🔇 Sound Off';
+  // load saves
+  const savesEl=document.getElementById('pm-saves');
+  try{
+    const s=JSON.parse(localStorage.getItem('babel_save'));
+    if(s){
+      savesEl.innerHTML=
+        `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Last Save</span><span style="color:#a78bfa">Wave ${s.wave||1} · Lv${s.playerLevel||1}</span></div>`+
+        `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Map</span><span style="color:#a78bfa">${MAPS[s.currentMap||0].name}</span></div>`+
+        `<div style="display:flex;justify-content:space-between"><span>Score</span><span style="color:#f1c40f">${s.score||0}</span></div>`;
+    } else {
+      savesEl.innerHTML='<span style="color:rgba(255,255,255,0.25)">No saves yet</span>';
+    }
+  }catch(e){savesEl.innerHTML='<span style="color:rgba(255,255,255,0.25)">No saves yet</span>';}
+  document.getElementById('pause-menu').style.display='flex';
+}
+
+function closePauseMenu(){
+  paused=false;
+  document.getElementById('pause-btn').textContent='⏸️';
+  document.getElementById('pause-menu').style.display='none';
+}
+
+function toggleSoundPause(){
+  if(musicOn){
+    musicOn=false;stopMusic();
+    document.getElementById('music-btn').textContent='🔇';
+    document.getElementById('pm-sound-btn').textContent='🔇 Sound Off';
+  } else {
+    musicOn=true;
+    document.getElementById('music-btn').textContent='🎵';
+    document.getElementById('pm-sound-btn').textContent='🎵 Sound On';
+    startMusic();
+  }
+}
+
+function goToMainMenu(){
+  saveProgress();
+  paused=false;
+  gs='start';
+  if(animId)cancelAnimationFrame(animId);
+  stopMusic();
+  enemies=[];towers=[];bullets=[];parts=[];
+  document.getElementById('pause-menu').style.display='none';
+  document.getElementById('pause-btn').textContent='⏸️';
+  document.getElementById('go').style.display='none';
+  document.getElementById('overlay').style.display='flex';
+  initCanvas();
+}
+
 function gameLoop(ts){
   const dt=Math.min(ts-last,50);last=ts;
   if(gs==='playing'&&!paused){
     if(waveOn)spawnE(dt);
-    updE(dt);updT(dt);updB(dt);updP(dt);draw2();
+    updE(dt);updT(dt);updB(dt);updBeams(dt);updP(dt);draw2();
   }
   animId=requestAnimationFrame(gameLoop);
 }

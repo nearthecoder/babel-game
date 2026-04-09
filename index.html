@@ -1486,6 +1486,7 @@ function togglePause(){
 }
 
 function openPauseMenu(){
+  if(gs!=='playing')return;
   paused=true;
   document.getElementById('pause-btn').textContent='▶️';
   // fill in current run info
@@ -1515,6 +1516,7 @@ function openPauseMenu(){
 
 function closePauseMenu(){
   paused=false;
+  gs='playing';
   document.getElementById('pause-btn').textContent='⏸️';
   document.getElementById('pause-menu').style.display='none';
 }

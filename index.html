@@ -99,7 +99,7 @@ canvas{position:absolute;top:0;left:0}
       <div class="sbox"><span class="sval" id="ui-coins" style="color:#f1c40f">100</span><span class="slbl">Gold</span></div>
       <div class="sbox"><span class="sval" id="ui-wave" style="color:#a78bfa">1</span><span class="slbl">Wave</span></div>
       <div class="sbox"><span class="sval" id="ui-score" style="color:#34d399">0</span><span class="slbl">Score</span></div>
-      <div class="sbox"><span class="sval" id="ui-plvl" style="color:#fb923c">1</span><span class="slbl">Level</span></div>
+      <div class="sbox" style="background:rgba(251,146,60,0.15);border-color:rgba(251,146,60,0.3)"><span class="sval" id="ui-plvl" style="color:#fb923c;font-size:24px">1</span><span class="slbl" style="color:#fb923c88">Level</span></div>
     </div>
     <div id="hbox"><span style="font-size:18px">❤️</span><span id="hc">20</span></div>
   </div>
@@ -894,8 +894,10 @@ function updateXPBar(){
   const next=PLAYER_LEVELS[playerLevel]||1;
   const pct=Math.min(100,(playerXP/next)*100);
   document.getElementById('xpbar').style.width=pct+'%';
-  document.getElementById('xplbl').textContent=`XP — Level ${playerLevel} (${playerXP}/${next})`;
+  document.getElementById('xplbl').textContent=`LVL ${playerLevel} — ${playerXP} / ${next} XP`;
   document.getElementById('ui-plvl').textContent=playerLevel;
+  const xpbarEl=document.getElementById('xpbar-bg');
+  if(xpbarEl)xpbarEl.title=`Level ${playerLevel}`;
 }
 
 function showNotif(msg){
@@ -957,7 +959,13 @@ function spawnE(dt){
 
 function updE(dt){
   for(let i=enemies.length-1;i>=0;i--){
-    const e=enemies[i];
+   const e=enemies[i];
+    if(e.hp<=0){
+      const killGold=e.reward||2;
+      coins+=killGold;score+=15*wave;addXP(8);updateUI();
+      spawnParts(e.x,e.y,'#a78bfa',14);
+      enemies.splice(i,1);continue;
+    }
     if(e.slowT>0){e.slowT-=dt;}else{e.slow=1;}
     if(e.pi>=PATH.length-1){
       enemies.splice(i,1);
@@ -1010,19 +1018,21 @@ function updT(dt){
     const stats=getTowerStats(t);
 
     // sage: aura — damages all enemies in range every tick, no bullet
-    if(t.type==='sage'){
+   if(t.type==='sage'){
       if(t.cd<=0){
-        t.cd=stats.rate;
-        enemies.forEach(e=>{
+        const inRange=enemies.filter(e=>{
           const dx=e.x-t.x,dy=e.y-t.y;
-          if(Math.sqrt(dx*dx+dy*dy)<=stats.range){
+          return Math.sqrt(dx*dx+dy*dy)<=stats.range;
+        });
+        if(inRange.length>0){
+          t.cd=stats.rate;
+          inRange.forEach(e=>{
             e.hp-=stats.dmg*0.4;
             if(stats.slow>0){e.slow=1-stats.slow;e.slowT=800;}
             spawnParts(e.x,e.y,stats.col,2);
-          }
-        });
-        // visual pulse ring
-        beams.push({x:t.x,y:t.y,r:0,maxR:stats.range,col:stats.col,life:1,type:'ring'});
+          });
+          beams.push({x:t.x,y:t.y,r:0,maxR:stats.range,col:stats.col,life:1,type:'ring'});
+        }
       }
       return;
     }
@@ -1073,7 +1083,7 @@ function updT(dt){
           hit=true;
         }
       });
-      if(hit||enemies.length>0){
+     if(hit){
         t.cd=stats.rate;
         beams.push({x:t.x,y:t.y,r:0,maxR:stats.range,col:stats.col,life:1,type:'ring'});
       }
@@ -1528,7 +1538,7 @@ function goToMainMenu(){
   gs='start';
   if(animId)cancelAnimationFrame(animId);
   stopMusic();
-  enemies=[];towers=[];bullets=[];parts=[];
+  enemies=[];towers=[];bullets=[];parts=[];beams=[];
   document.getElementById('pause-menu').style.display='none';
   document.getElementById('pause-btn').textContent='⏸️';
   document.getElementById('go').style.display='none';
@@ -1738,8 +1748,8 @@ function continueGame(){
 }
 window.addEventListener('resize',()=>{initCanvas();});
 if(window.speechSynthesis)window.speechSynthesis.getVoices();
-loadProgress();
-  initCanvas();
+window.addEventListener('DOMContentLoaded',()=>{loadProgress();});
+initCanvas();
 </script>
 </body>
 </html>

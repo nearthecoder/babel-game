@@ -814,6 +814,7 @@ function startLearn(){
   let pool=[...getVocab()];
   pool=pool.filter(w=>usedWords.indexOf(w.w)<0);
   if(pool.length<3){usedWords=[];pool=[...getVocab()];}
+  if(!pool.length){startWave2();return;}
   for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
   const count=Math.min(2+Math.floor(wave/3),4);
   learnWords=pool.slice(0,count);
@@ -823,7 +824,10 @@ function startLearn(){
 }
 
 function showLearnCard(){
-  document.getElementById('learn-panel').style.display='flex';
+  const lp=document.getElementById('learn-panel');
+  lp.style.display='flex';
+  lp.style.alignItems='center';
+  lp.style.justifyContent='center';
   const w=learnWords[learnIdx];
   document.getElementById('lc-badge').textContent=lang==='korean'?'🇰🇷 Korean':'🇯🇵 Japanese';
   document.getElementById('lc-word').textContent=w.w;

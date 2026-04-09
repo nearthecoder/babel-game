@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Babel</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0a1a;font-family:'Nunito',sans-serif;color:#fff;overflow:hidden;height:100vh}
+#gc{position:relative;width:100vw;height:100vh;overflow:hidden}
+canvas{position:absolute;top:0;left:0}
+#ui{position:absolute;top:0;left:0;right:0;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10;pointer-events:none;background:linear-gradient(rgba(0,0,0,0.7),transparent)}
+.sbox{background:rgba(0,0,0,0.5);border:1.5px solid rgba(255,255,255,0.12);border-radius:10px;padding:5px 12px;display:flex;flex-direction:column;align-items:center}
+.sval{font-family:'Cinzel',sans-serif;font-size:20px;line-height:1.1}
+.slbl{font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.4);text-transform:uppercase}
+#hbox{display:flex;align-items:center;gap:6px;background:rgba(100,0,0,0.4);border:1.5px solid rgba(220,50,50,0.3);border-radius:10px;padding:5px 12px}
+#hc{font-family:'Cinzel',sans-serif;font-size:22px;color:#ff6b6b}
+#xpbar-wrap{position:absolute;top:56px;left:16px;right:16px;z-index:10;pointer-events:none}
+#xpbar-bg{background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:6px;height:8px;overflow:hidden}
+#xpbar{height:100%;background:linear-gradient(90deg,#7c3aed,#a855f7,#c084fc);border-radius:6px;transition:width 0.4s}
+#xplbl{font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1px;margin-bottom:3px}
+#shop{position:absolute;bottom:0;left:0;right:0;padding:10px 12px;display:flex;justify-content:center;gap:6px;z-index:10;background:linear-gradient(transparent,rgba(0,0,0,0.9))}
+.tbtn{border:1.5px solid rgba(255,255,255,0.15);border-radius:12px;padding:6px 10px;cursor:pointer;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:66px;font-family:'Nunito',sans-serif;position:relative;background:rgba(0,0,0,0.4)}
+.tbtn:hover:not(.locked):not(.cant){transform:translateY(-3px);border-color:rgba(255,255,255,0.5)}
+.tbtn.selected{border-color:#f1c40f;box-shadow:0 0 14px rgba(241,196,15,0.5)}
+.tbtn.locked{opacity:0.35;cursor:not-allowed;filter:grayscale(0.8)}
+.tbtn.cant{opacity:0.4;cursor:not-allowed}
+.ticon{font-size:20px;line-height:1}.tname{font-size:8px;letter-spacing:1px;color:rgba(255,255,255,0.65);text-transform:uppercase;font-weight:700}.tcost{font-size:12px;font-weight:800;color:#f1c40f}
+.lock-badge{position:absolute;top:-6px;right:-6px;background:#7c3aed;border-radius:50%;width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center}
+.tier-badge{position:absolute;top:-6px;left:-6px;background:#374151;border-radius:4px;padding:1px 4px;font-size:8px;color:#9ca3af;font-weight:700}
+
+#overlay{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85)}
+#start-card{background:linear-gradient(135deg,#0d0a1a,#1e1040);border:2px solid rgba(124,58,237,0.4);border-radius:24px;padding:32px 40px;max-width:520px;width:92%;text-align:center;box-shadow:0 0 80px rgba(124,58,237,0.2)}
+#start-card h1{font-family:'Cinzel',sans-serif;font-size:64px;letter-spacing:6px;background:linear-gradient(135deg,#a78bfa,#f472b6,#fb923c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+#start-card .tagline{font-size:13px;color:rgba(255,255,255,0.45);letter-spacing:3px;text-transform:uppercase;margin-bottom:24px}
+.section-title{font-family:'Cinzel',sans-serif;font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.35);text-transform:uppercase;margin-bottom:10px}
+#lang-row,#diff-row{display:flex;gap:8px;justify-content:center;margin-bottom:20px}
+.opt-btn{background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.15);border-radius:10px;padding:8px 18px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.7);transition:all 0.2s}
+.opt-btn.on{background:rgba(124,58,237,0.25);border-color:#a78bfa;color:#fff}
+#playbtn{background:linear-gradient(135deg,#7c3aed,#db2777);border:none;border-radius:50px;padding:14px 52px;font-family:'Cinzel',sans-serif;font-size:20px;letter-spacing:3px;color:#fff;cursor:pointer;box-shadow:0 4px 24px rgba(124,58,237,0.5);transition:all 0.2s;margin-top:8px}
+#playbtn:hover{transform:scale(1.04);box-shadow:0 6px 32px rgba(124,58,237,0.7)}
+
+#learn-panel,#q-panel{position:absolute;inset:0;z-index:35;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.8)}
+.panel-card{background:linear-gradient(135deg,#0d0a1a,#1e1040);border:2px solid rgba(124,58,237,0.35);border-radius:20px;padding:26px 32px;max-width:460px;width:90%;text-align:center}
+.lang-badge{background:rgba(124,58,237,0.2);border:1px solid rgba(124,58,237,0.35);border-radius:50px;padding:3px 14px;font-size:9px;letter-spacing:2px;color:#a78bfa;text-transform:uppercase;display:inline-block;margin-bottom:10px}
+.big-word{font-family:'Cinzel',sans-serif;font-size:48px;color:#fff;line-height:1;margin-bottom:4px}
+.rom-text{font-size:15px;color:rgba(255,255,255,0.35);font-style:italic;margin-bottom:10px;transition:opacity 0.3s}
+.meaning-text{font-size:26px;font-weight:800;color:#a78bfa;margin-bottom:14px}
+.speak-btn{background:rgba(124,58,237,0.2);border:1.5px solid rgba(124,58,237,0.35);border-radius:50px;padding:6px 18px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:#a78bfa;cursor:pointer;margin-bottom:14px;transition:all 0.2s}
+.speak-btn:hover{background:rgba(124,58,237,0.4)}
+.prog-text{font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:12px;letter-spacing:1px}
+.next-btn{background:linear-gradient(135deg,#7c3aed,#db2777);border:none;border-radius:50px;padding:11px 34px;font-family:'Cinzel',sans-serif;font-size:17px;color:#fff;cursor:pointer;transition:all 0.2s}
+.next-btn:hover{transform:scale(1.03)}
+#q-choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.cbtn{background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 14px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:#fff;transition:all 0.2s}
+.cbtn:hover{background:rgba(124,58,237,0.2);border-color:rgba(124,58,237,0.6)}
+.cbtn.ok{background:rgba(46,213,115,0.15);border-color:#2ed573;color:#2ed573}
+.cbtn.no{background:rgba(231,76,60,0.15);border-color:#e74c3c;color:#e74c3c}
+#q-feedback{font-size:14px;color:#f1c40f;font-weight:800;min-height:20px;margin-bottom:6px}
+#q-streak{font-size:12px;color:rgba(255,255,255,0.4)}
+#q-prog{font-size:10px;color:rgba(255,255,255,0.25);margin-top:6px;letter-spacing:1px}
+
+#wave-flash{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Cinzel',sans-serif;font-size:72px;color:#fff;text-align:center;z-index:20;opacity:0;pointer-events:none;transition:opacity 0.4s;text-shadow:0 0 40px rgba(124,58,237,0.9),0 0 80px rgba(124,58,237,0.4)}
+#hint{position:absolute;top:76px;left:50%;transform:translateX(-50%);background:rgba(124,58,237,0.85);border-radius:50px;padding:5px 16px;font-size:11px;font-weight:700;z-index:15;pointer-events:none;display:none;white-space:nowrap}
+#music-btn{position:absolute;top:10px;right:10px;z-index:15;background:rgba(0,0,0,0.5);border:1.5px solid rgba(255,255,255,0.12);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+
+#upgrade-panel{position:absolute;inset:0;z-index:36;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85)}
+#upg-card{background:linear-gradient(135deg,#0d0a1a,#1e1040);border:2px solid rgba(124,58,237,0.4);border-radius:20px;padding:24px 28px;max-width:440px;width:90%}
+#upg-title{font-family:'Cinzel',sans-serif;font-size:22px;margin-bottom:4px;color:#a78bfa}
+#upg-sub{font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:18px;letter-spacing:1px}
+.upg-path{margin-bottom:14px}
+.upg-path-name{font-family:'Cinzel',sans-serif;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:6px}
+.upg-levels{display:flex;gap:6px}
+.upg-lvl{flex:1;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;transition:all 0.2s;font-size:10px;font-weight:700;position:relative}
+.upg-lvl:hover:not(.bought):not(.locked-upg){border-color:#a78bfa;background:rgba(124,58,237,0.15)}
+.upg-lvl.bought{background:rgba(46,213,115,0.12);border-color:#2ed573;color:#2ed573;cursor:default}
+.upg-lvl.locked-upg{opacity:0.3;cursor:not-allowed}
+.upg-lvl .cost{font-size:9px;color:#f1c40f;margin-top:3px}
+#upg-close{background:none;border:1.5px solid rgba(255,255,255,0.15);border-radius:50px;padding:8px 24px;font-family:'Nunito',sans-serif;font-size:13px;color:rgba(255,255,255,0.5);cursor:pointer;margin-top:8px;transition:all 0.2s;width:100%}
+#upg-close:hover{border-color:rgba(255,255,255,0.4);color:#fff}
+.sell-btn{background:rgba(231,76,60,0.15);border:1.5px solid rgba(231,76,60,0.3);border-radius:8px;padding:6px 12px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;color:#e74c3c;cursor:pointer;margin-top:8px;transition:all 0.2s;width:100%}
+.sell-btn:hover{background:rgba(231,76,60,0.3)}
+
+#go{position:absolute;inset:0;background:rgba(0,0,0,0.93);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:50;gap:14px}
+#go h2{font-family:'Cinzel',sans-serif;font-size:60px;color:#e74c3c;text-shadow:0 0 30px rgba(231,76,60,0.5)}
+#go .stats{font-size:16px;color:rgba(255,255,255,0.5);text-align:center;line-height:2}
+#go button{background:linear-gradient(135deg,#7c3aed,#db2777);border:none;border-radius:50px;padding:13px 40px;font-family:'Cinzel',sans-serif;font-size:19px;color:#fff;cursor:pointer;letter-spacing:2px}
+#notif{position:absolute;top:80px;left:50%;transform:translateX(-50%);z-index:45;font-family:'Cinzel',sans-serif;font-size:18px;color:#f1c40f;text-shadow:0 0 20px rgba(241,196,15,0.6);opacity:0;transition:opacity 0.4s;pointer-events:none;white-space:nowrap;text-align:center}
+</style>
+</head>
+<body>
+<div id="gc">
+  <canvas id="bgc"></canvas>
+  <canvas id="main"></canvas>
+
+  <div id="ui">
+    <div style="display:flex;gap:8px">
+      <div class="sbox"><span class="sval" id="ui-coins" style="color:#f1c40f">100</span><span class="slbl">Gold</span></div>
+      <div class="sbox"><span class="sval" id="ui-wave" style="color:#a78bfa">1</span><span class="slbl">Wave</span></div>
+      <div class="sbox"><span class="sval" id="ui-score" style="color:#34d399">0</span><span class="slbl">Score</span></div>
+      <div class="sbox" style="background:rgba(251,146,60,0.15);border-color:rgba(251,146,60,0.3)"><span class="sval" id="ui-plvl" style="color:#fb923c;font-size:24px">1</span><span class="slbl" style="color:#fb923c88">Level</span></div>
+    </div>
+    <div id="hbox"><span style="font-size:18px">❤️</span><span id="hc">20</span></div>
+  </div>
+  <div id="xpbar-wrap">
+    <div id="xplbl">XP — Level 1</div>
+    <div id="xpbar-bg"><div id="xpbar" style="width:0%"></div></div>
+  </div>
+  <div id="hint">Click off the path to place</div>
+  <div id="wave-flash"></div>
+ <div id="music-btn" onclick="toggleMusic()">🎵</div>
+<div id="pause-btn" onclick="openPauseMenu()" style="position:absolute;top:10px;right:52px;z-index:15;background:rgba(0,0,0,0.5);border:1.5px solid rgba(255,255,255,0.12);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px">⏸️</div>
+  <div id="notif"></div>
+
+  <div id="shop">
+    <button class="tbtn" id="btn-ranger" onclick="tryPick('ranger')">
+      <span class="tier-badge">T1</span><span class="ticon">🏹</span><span class="tname">Ranger</span><span class="tcost">60g</span>
+    </button>
+    <button class="tbtn" id="btn-spark" onclick="tryPick('spark')">
+      <span class="tier-badge">T1</span><span class="ticon">⚡</span><span class="tname">Spark</span><span class="tcost">80g</span>
+    </button>
+    <button class="tbtn" id="btn-sage" onclick="tryPick('sage')">
+      <span class="tier-badge">T1</span><span class="ticon">🧊</span><span class="tname">Sage</span><span class="tcost">90g</span>
+    </button>
+    <button class="tbtn locked" id="btn-bomber" onclick="tryPick('bomber')">
+      <span class="tier-badge">T2</span><span class="lock-badge">🔒</span><span class="ticon">💣</span><span class="tname">Bomber</span><span class="tcost">100g</span>
+    </button>
+    <button class="tbtn locked" id="btn-phantom" onclick="tryPick('phantom')">
+      <span class="tier-badge">T2</span><span class="lock-badge">🔒</span><span class="ticon">👁️</span><span class="tname">Phantom</span><span class="tcost">120g</span>
+    </button>
+    <button class="tbtn locked" id="btn-alchemist" onclick="tryPick('alchemist')">
+      <span class="tier-badge">T2</span><span class="lock-badge">🔒</span><span class="ticon">⚗️</span><span class="tname">Alchemist</span><span class="tcost">130g</span>
+    </button>
+    <button class="tbtn locked" id="btn-warlord" onclick="tryPick('warlord')">
+      <span class="tier-badge">T3</span><span class="lock-badge">🔒</span><span class="ticon">⚔️</span><span class="tname">Warlord</span><span class="tcost">180g</span>
+    </button>
+    <button class="tbtn locked" id="btn-sorcerer" onclick="tryPick('sorcerer')">
+      <span class="tier-badge">T3</span><span class="lock-badge">🔒</span><span class="ticon">🔮</span><span class="tname">Sorcerer</span><span class="tcost">200g</span>
+    </button>
+    <button class="tbtn locked" id="btn-dragon" onclick="tryPick('dragon')">
+      <span class="tier-badge">T4</span><span class="lock-badge">🔒</span><span class="ticon">🐉</span><span class="tname">Dragon</span><span class="tcost">280g</span>
+    </button>
+  </div>
+
+  <div id="overlay">
+    <div id="start-card">
+      <h1>BABEL</h1>
+      <div class="tagline">The Language Defense</div>
+      <div class="section-title">Choose Language</div>
+      <div id="lang-row">
+        <button class="opt-btn on" onclick="setLang('korean',this)">🇰🇷 Korean</button>
+        <button class="opt-btn" onclick="setLang('japanese',this)">🇯🇵 Japanese</button>
+      </div>
+      <div class="section-title">Difficulty</div>
+      <div id="diff-row">
+        <button class="opt-btn on" onclick="setDiff('basic',this)">⚔️ Basic</button>
+        <button class="opt-btn" onclick="setDiff('intermediate',this)">🛡️ Intermediate</button>
+        <button class="opt-btn" onclick="setDiff('fluent',this)">👑 Fluent</button>
+      </div>
+      <div class="section-title">Choose Map</div>
+<div id="map-row" style="display:flex;gap:8px;justify-content:center;margin-bottom:20px">
+  <button class="opt-btn on" onclick="setMap(0,this)">🗺️ Crossing</button>
+  <button class="opt-btn" onclick="setMap(1,this)">🌀 Spiral</button>
+  <button class="opt-btn" onclick="setMap(2,this)">⚔️ Gauntlet</button>
+</div>
+     <button id="playbtn" onclick="startGame()">NEW GAME</button>
+      <button id="contbtn" onclick="continueGame()" style="background:rgba(124,58,237,0.15);border:1.5px solid rgba(124,58,237,0.4);border-radius:50px;padding:10px 36px;font-family:'Cinzel',sans-serif;font-size:14px;letter-spacing:2px;color:#a78bfa;cursor:pointer;margin-top:8px;display:none">↩ CONTINUE</button>
+  </div>
+
+  <div id="learn-panel">
+    <div class="panel-card">
+      <div id="lc-badge" class="lang-badge">🇰🇷 Korean</div>
+      <div style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-bottom:12px">Study This Word</div>
+      <div id="lc-word" class="big-word">안녕하세요</div>
+      <div id="lc-rom" class="rom-text">annyeonghaseyo</div>
+      <div id="lc-meaning" class="meaning-text">Hello</div>
+      <button class="speak-btn" onclick="speakLearn()">🔊 Hear Pronunciation</button>
+      <div id="lc-prog" class="prog-text">Word 1 of 5</div>
+      <button class="next-btn" id="lc-next" onclick="nextLearn()">Got it →</button>
+    </div>
+  </div>
+
+  <div id="q-panel">
+    <div class="panel-card">
+      <div id="q-badge" class="lang-badge">🇰🇷 Korean</div>
+      <div id="q-word" class="big-word">안녕하세요</div>
+      <div id="q-rom" class="rom-text" style="opacity:0">annyeonghaseyo</div>
+      <button class="speak-btn" onclick="speakQ()" style="margin-bottom:8px">🔊 Listen</button>
+      <div style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-bottom:12px">What does this mean?</div>
+      <div id="q-choices"></div>
+      <div id="q-feedback"></div>
+      <div id="q-streak"></div>
+      <div id="q-prog"></div>
+    </div>
+  </div>
+
+  <div id="upgrade-panel">
+    <div id="upg-card">
+      <div id="upg-title">Ranger</div>
+      <div id="upg-sub">Kills: 0 · Tower XP: 0</div>
+      <div id="upg-paths"></div>
+      <button class="sell-btn" id="sell-btn">Sell Tower</button>
+      <button id="upg-close" onclick="closeUpgrade()">Close</button>
+    </div>
+  </div>
+
+  <div id="pause-menu" style="display:none;position:absolute;inset:0;z-index:48;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;flex-direction:column;gap:0">
+    <div style="background:linear-gradient(135deg,#0d0a1a,#1e1040);border:2px solid rgba(124,58,237,0.4);border-radius:24px;padding:32px 40px;max-width:420px;width:92%;text-align:center;box-shadow:0 0 80px rgba(124,58,237,0.2)">
+      <div style="font-family:'Cinzel',sans-serif;font-size:32px;letter-spacing:4px;color:#a78bfa;margin-bottom:4px">PAUSED</div>
+      <div style="font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-bottom:24px">Wave <span id="pm-wave">1</span> · Score <span id="pm-score">0</span></div>
+
+      <div style="background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;margin-bottom:18px;text-align:left">
+        <div style="font-family:'Cinzel',sans-serif;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-bottom:12px">Current Run</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span style="color:rgba(255,255,255,0.5)">Map</span><span id="pm-map" style="color:#a78bfa;font-weight:700">The Crossing</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span style="color:rgba(255,255,255,0.5)">Language</span><span id="pm-lang" style="color:#a78bfa;font-weight:700">Korean</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span style="color:rgba(255,255,255,0.5)">Difficulty</span><span id="pm-diff" style="color:#a78bfa;font-weight:700">Basic</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span style="color:rgba(255,255,255,0.5)">Level</span><span id="pm-lvl" style="color:#f1c40f;font-weight:700">1</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:rgba(255,255,255,0.5)">Gold</span><span id="pm-gold" style="color:#f1c40f;font-weight:700">250</span></div>
+      </div>
+
+      <div style="background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px;margin-bottom:18px;text-align:left">
+        <div style="font-family:'Cinzel',sans-serif;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-bottom:12px">Best Saves</div>
+        <div id="pm-saves" style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.8"></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button onclick="closePauseMenu()" style="background:linear-gradient(135deg,#7c3aed,#db2777);border:none;border-radius:50px;padding:12px;font-family:'Cinzel',sans-serif;font-size:16px;letter-spacing:2px;color:#fff;cursor:pointer;width:100%">▶ RESUME</button>
+        <div style="display:flex;gap:10px">
+          <button id="pm-sound-btn" onclick="toggleSoundPause()" style="flex:1;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.15);border-radius:50px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:#fff;cursor:pointer">🎵 Sound On</button>
+          <button onclick="goToMainMenu()" style="flex:1;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.15);border-radius:50px;padding:10px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;color:#e74c3c;cursor:pointer">🏠 Main Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="go">
+    <h2>DEFEATED</h2>
+    <p class="stats" id="go-stats"></p>
+    <button onclick="restartGame()">RISE AGAIN</button>
+  </div>
+</div>
+
+<script>
+// ─── polyfill roundRect for older browsers ───
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+    r=Math.min(r,w/2,h/2);
+    this.beginPath();
+    this.moveTo(x+r,y);
+    this.lineTo(x+w-r,y);this.arcTo(x+w,y,x+w,y+r,r);
+    this.lineTo(x+w,y+h-r);this.arcTo(x+w,y+h,x+w-r,y+h,r);
+    this.lineTo(x+r,y+h);this.arcTo(x,y+h,x,y+h-r,r);
+    this.lineTo(x,y+r);this.arcTo(x,y,x+r,y,r);
+    this.closePath();return this;
+  };
+}
+
+var VOCAB={
+  korean:{
+    basic:[
+     {w:'안녕',r:'annyeong',m:'Hi',x:['Goodbye','See you','Take care']},
+      {w:'네',r:'ne',m:'Yes',x:['No','Maybe','Of course']},
+      {w:'아니요',r:'aniyo',m:'No',x:['Yes','Never','Not yet']},
+      {w:'물',r:'mul',m:'Water',x:['Juice','Milk','Tea']},
+      {w:'밥',r:'bap',m:'Rice',x:['Noodles','Bread','Porridge']},
+      {w:'나',r:'na',m:'I / Me',x:['You','They','We']},
+      {w:'집',r:'jip',m:'Home',x:['School','Store','Park']},
+      {w:'돈',r:'don',m:'Money',x:['Time','Food','Work']},
+      {w:'왜',r:'wae',m:'Why',x:['Where','When','How']},
+      {w:'뭐',r:'mwo',m:'What',x:['Who','Where','When']},
+      {w:'어디',r:'eodi',m:'Where',x:['When','Why','What']},
+      {w:'이거',r:'igeo',m:'This',x:['That','Here','There']},
+      {w:'좋아',r:'joha',m:'Good / Like',x:['Hate','Dislike','Despise']},
+      {w:'싫어',r:'shireo',m:'Dislike',x:['Like','Enjoy','Adore']},
+      {w:'배',r:'bae',m:'Stomach',x:['Head','Hand','Foot']},
+      {w:'눈',r:'nun',m:'Eye / Snow',x:['Ear','Nose','Mouth']},
+      {w:'손',r:'son',m:'Hand',x:['Foot','Head','Nose']},
+      {w:'물고기',r:'mulgogi',m:'Fish',x:['Bird','Cat','Dog']},
+     {w:'고양이',r:'goyangi',m:'Cat',x:['Rabbit','Hamster','Squirrel']},
+      {w:'개',r:'gae',m:'Dog',x:['Wolf','Fox','Bear']},
+      {w:'사람',r:'saram',m:'Person',x:['Animal','Thing','Place']},
+      {w:'친구',r:'chingu',m:'Friend',x:['Enemy','Teacher','Stranger']},
+      {w:'음식',r:'eumsik',m:'Food',x:['Water','Drink','Medicine']},
+      {w:'학교',r:'hakgyo',m:'School',x:['Home','Work','Store']},
+      {w:'시간',r:'sigan',m:'Time',x:['Place','Money','Work']},
+      {w:'오늘',r:'oneul',m:'Today',x:['Yesterday','Tomorrow','Now']},
+      {w:'내일',r:'naeil',m:'Tomorrow',x:['Today','Yesterday','Later']},
+      {w:'어제',r:'eoje',m:'Yesterday',x:['Today','Tomorrow','Before']},
+      {w:'지금',r:'jigeum',m:'Now',x:['Later','Before','After']},
+      {w:'많다',r:'manta',m:'Many / A lot',x:['Few','None','Some']},
+      {w:'작다',r:'jakda',m:'Small',x:['Big','Tall','Wide']},
+      {w:'크다',r:'keuda',m:'Big',x:['Small','Short','Thin']},
+      {w:'빠르다',r:'ppareuda',m:'Fast',x:['Slow','Quiet','Lazy']},
+      {w:'느리다',r:'neurida',m:'Slow',x:['Fast','Loud','Strong']},
+    ],
+    intermediate:[
+      {w:'감사합니다',r:'gamsahamnida',m:'Thank you',x:['Hello','Please','Sorry']},
+      {w:'안녕하세요',r:'annyeonghaseyo',m:'Hello',x:['Goodbye','Thanks','Sorry']},
+      {w:'사랑해요',r:'saranghaeyo',m:'I love you',x:['I hate you','I miss you','I need you']},
+      {w:'친구',r:'chingu',m:'Friend',x:['Enemy','Teacher','Family']},
+      {w:'학교',r:'hakgyo',m:'School',x:['Home','Work','Hospital']},
+      {w:'지금',r:'jigeum',m:'Now',x:['Later','Before','Never']},
+      {w:'오늘',r:'oneul',m:'Today',x:['Yesterday','Tomorrow','Later']},
+      {w:'맛있다',r:'masitda',m:'Delicious',x:['Disgusting','Spicy','Sweet']},
+      {w:'피곤해',r:'pigonhae',m:'Tired',x:['Excited','Hungry','Happy']},
+      {w:'예쁘다',r:'yeppeuda',m:'Pretty',x:['Ugly','Big','Small']},
+      {w:'바쁘다',r:'bappeuda',m:'Busy',x:['Free','Lazy','Slow']},
+      {w:'빠르다',r:'ppareuda',m:'Fast',x:['Slow','Big','Short']},
+      {w:'조용히',r:'joyonghi',m:'Quietly',x:['Loudly','Quickly','Slowly']},
+      {w:'진짜',r:'jinjja',m:'Really / True',x:['Fake','Maybe','Never']},
+      {w:'괜찮아',r:'gwaenchanah',m:'It is okay',x:['Not okay','I am sad','I am angry']},
+      {w:'보고싶다',r:'bogosipda',m:'I miss you',x:['I love you','I hate you','I need you']},
+      {w:'어떻게',r:'eotteoke',m:'How',x:['Why','When','Where']},
+      {w:'모르겠다',r:'moreugessda',m:'I do not know',x:['I know','I see','I think']},
+      {w:'도와줘',r:'dowajwo',m:'Help me',x:['Leave me','Wait for me','Follow me']},
+      {w:'잠깐만',r:'jamkkanman',m:'Wait a moment',x:['Come here','Hurry up','Go away']},
+    ],
+    fluent:[
+      {w:'그리워',r:'geuriwo',m:'I miss (something)',x:['I want','I need','I forgot']},
+      {w:'설레다',r:'seolleda',m:'Excited/Fluttery',x:['Nervous','Bored','Calm']},
+      {w:'눈치',r:'nunchi',m:'Social awareness',x:['Kindness','Courage','Wisdom']},
+      {w:'한',r:'han',m:'Deep sorrow',x:['Great joy','Pure love','Strong will']},
+      {w:'정',r:'jeong',m:'Deep attachment',x:['Jealousy','Loneliness','Pride']},
+      {w:'눈꼽',r:'nunkkop',m:'Eye crust',x:['Eyelash','Tear','Eyebrow']},
+      {w:'뒷담화',r:'dwitdamhwa',m:'Talking behind back',x:['Gossip front','Compliment','Praise']},
+      {w:'어처구니',r:'eocheoguni',m:'Absurdity',x:['Sincerity','Bravery','Patience']},
+      {w:'빈정거리다',r:'binjeonggeorida',m:'To be sarcastic',x:['To praise','To comfort','To ignore']},
+      {w:'아리송하다',r:'arisonghada',m:'Ambiguous/Unclear',x:['Very clear','Exciting','Boring']},
+      {w:'하마터면',r:'hamateoumyeon',m:'Almost/Nearly',x:['Definitely','Never','Always']},
+      {w:'갈팡질팡',r:'galpangjilpang',m:'Confused wandering',x:['Clear direction','Fast running','Deep sleeping']},
+      {w:'나부끼다',r:'nabukida',m:'To flutter/wave',x:['To freeze','To sink','To burn']},
+      {w:'두근두근',r:'dugeundeugeun',m:'Heart pounding',x:['Sleepy sound','Crying sound','Laughing sound']},
+      {w:'울컥하다',r:'ulkeokhada',m:'Sudden emotion',x:['Feel nothing','Think slowly','Move quickly']},
+      {w:'얼렁뚱땅',r:'eolleongddungddang',m:'Haphazardly',x:['Carefully done','Very slowly','With purpose']},
+      {w:'부스스하다',r:'buseoseuhada',m:'Disheveled',x:['Well dressed','Very clean','Neatly done']},
+      {w:'쭈뼛쭈뼛',r:'jjubyeotjjubyeot',m:'Hesitantly',x:['Confidently','Quickly','Loudly']},
+      {w:'티격태격',r:'tigeoktaegeok',m:'Bickering',x:['Hugging tight','Laughing loud','Working hard']},
+      {w:'감언이설',r:'gamenisseol',m:'Sweet empty words',x:['Honest words','Harsh truth','Wise saying']},
+    ]
+  },
+  japanese:{
+    basic:[
+      {w:'はい',r:'hai',m:'Yes',x:['No','Maybe','Please']},
+      {w:'いいえ',r:'iie',m:'No',x:['Yes','Maybe','Okay']},
+      {w:'水',r:'mizu',m:'Water',x:['Food','Fire','Air']},
+      {w:'ご飯',r:'gohan',m:'Rice',x:['Bread','Soup','Meat']},
+      {w:'私',r:'watashi',m:'I / Me',x:['You','They','We']},
+      {w:'家',r:'ie',m:'Home',x:['School','Store','Park']},
+      {w:'お金',r:'okane',m:'Money',x:['Time','Food','Work']},
+      {w:'なぜ',r:'naze',m:'Why',x:['Where','When','How']},
+      {w:'何',r:'nani',m:'What',x:['Who','Where','When']},
+      {w:'どこ',r:'doko',m:'Where',x:['When','Why','What']},
+      {w:'これ',r:'kore',m:'This',x:['That','Here','There']},
+      {w:'いい',r:'ii',m:'Good',x:['Bad','Hate','Sad']},
+      {w:'猫',r:'neko',m:'Cat',x:['Dog','Bird','Fish']},
+      {w:'犬',r:'inu',m:'Dog',x:['Cat','Bird','Fish']},
+      {w:'魚',r:'sakana',m:'Fish',x:['Bird','Cat','Dog']},
+      {w:'目',r:'me',m:'Eye',x:['Ear','Nose','Mouth']},
+      {w:'手',r:'te',m:'Hand',x:['Foot','Head','Nose']},
+      {w:'足',r:'ashi',m:'Foot / Leg',x:['Hand','Head','Ear']},
+      {w:'大きい',r:'ookii',m:'Big',x:['Small','Fast','Slow']},
+      {w:'小さい',r:'chiisai',m:'Small',x:['Big','Fast','Slow']},
+    ],
+    intermediate:[
+      {w:'ありがとう',r:'arigatou',m:'Thank you',x:['Hello','Please','Sorry']},
+      {w:'こんにちは',r:'konnichiwa',m:'Hello',x:['Goodbye','Thanks','Sorry']},
+      {w:'愛してる',r:'aishiteru',m:'I love you',x:['I hate you','I miss you','I need you']},
+      {w:'友達',r:'tomodachi',m:'Friend',x:['Enemy','Teacher','Family']},
+      {w:'学校',r:'gakkou',m:'School',x:['Home','Work','Hospital']},
+      {w:'今',r:'ima',m:'Now',x:['Later','Before','Never']},
+      {w:'今日',r:'kyou',m:'Today',x:['Yesterday','Tomorrow','Later']},
+      {w:'おいしい',r:'oishii',m:'Delicious',x:['Disgusting','Spicy','Sweet']},
+      {w:'疲れた',r:'tsukareta',m:'Tired',x:['Excited','Hungry','Happy']},
+      {w:'きれい',r:'kirei',m:'Pretty',x:['Ugly','Big','Small']},
+      {w:'忙しい',r:'isogashii',m:'Busy',x:['Free','Lazy','Slow']},
+      {w:'速い',r:'hayai',m:'Fast',x:['Slow','Big','Short']},
+      {w:'静かに',r:'shizukani',m:'Quietly',x:['Loudly','Quickly','Slowly']},
+      {w:'本当に',r:'hontoni',m:'Really / Truly',x:['Fake','Maybe','Never']},
+      {w:'大丈夫',r:'daijoubu',m:'It is okay',x:['Not okay','I am sad','I am angry']},
+      {w:'会いたい',r:'aitai',m:'I want to see you',x:['I love you','I hate you','I need you']},
+      {w:'どうやって',r:'douyatte',m:'How',x:['Why','When','Where']},
+      {w:'知らない',r:'shiranai',m:'I do not know',x:['I know','I see','I think']},
+      {w:'助けて',r:'tasukete',m:'Help me',x:['Leave me','Wait for me','Follow me']},
+      {w:'ちょっと待って',r:'chotto matte',m:'Wait a moment',x:['Come here','Hurry up','Go away']},
+    ],
+    fluent:[
+      {w:'物哀しい',r:'monoganashii',m:'Lonely sorrow',x:['Great joy','Pure love','Strong will']},
+      {w:'木漏れ日',r:'komorebi',m:'Sunlight through trees',x:['Moonlight shadow','Deep ocean light','Morning mist glow']},
+      {w:'侘び寂び',r:'wabisabi',m:'Beauty in imperfection',x:['Perfect beauty','Pure happiness','Great strength']},
+      {w:'木枯らし',r:'kogarashi',m:'Cold winter wind',x:['Warm summer breeze','Spring rain drop','Autumn leaf fall']},
+      {w:'積ん読',r:'tsundoku',m:'Buying unread books',x:['Reading all day','Lending your books','Writing a novel']},
+      {w:'過労死',r:'karoshi',m:'Death by overwork',x:['Died of boredom','Sleeping at work','Quitting your job']},
+      {w:'山川草木',r:'sansensomoku',m:'All of nature',x:['Human society','City buildings','Ocean and sky']},
+      {w:'七転八起',r:'nanakorobiyaoki',m:'Fall seven rise eight',x:['Give up easily','Stay down always','Win without trying']},
+      {w:'以心伝心',r:'ishindeshin',m:'Telepathy / Unspoken understanding',x:['Loud argument','Written letter','Formal speech']},
+      {w:'花鳥風月',r:'kachofugetsu',m:'Beauty of nature',x:['Ugliness of city','Sound of war','Taste of food']},
+      {w:'一期一会',r:'ichigoichie',m:'Once in a lifetime meeting',x:['Everyday greeting','Common farewell','Planned reunion']},
+      {w:'七五三',r:'shichigosan',m:'Child growth festival',x:['New Year festival','Summer fire festival','Harvest moon event']},
+      {w:'渡りに船',r:'watarinifune',m:'Perfect timing',x:['Bad timing','Wrong place','Missed chance']},
+      {w:'岡目八目',r:'okamehachimoku',m:'Outside view is clearest',x:['Inside view best','Closest knows most','Expert always right']},
+      {w:'春眠暁を覚えず',r:'shunminakatsukiwooboezu',m:'Spring sleep ignores dawn',x:['Summer heat wakes all','Winter cold freezes dreams','Autumn wind calls awake']},
+      {w:'無我夢中',r:'mugamuchuu',m:'Lost in concentration',x:['Wide awake alert','Completely bored','Totally confused']},
+      {w:'五月晴れ',r:'satsukibare',m:'Clear May sky',x:['Stormy October','Foggy February','Rainy November']},
+      {w:'暖簾に腕押し',r:'norenniuneoshi',m:'Useless effort',x:['Effective action','Perfect result','Brilliant idea']},
+      {w:'触らぬ神に祟りなし',r:'sawaranukaminitatarinas',m:'Let sleeping dogs lie',x:['Chase every problem','Fix everything now','Never ignore issues']},
+      {w:'笑う門には福来たる',r:'waraukadoniwa',m:'Laughter brings fortune',x:['Anger brings power','Silence brings wisdom','Sadness brings strength']},
+    ]
+  }
+};
+
+var TOWERS={
+  ranger: {name:'Ranger',icon:'🏹',cost:60,range:140,dmg:30,rate:1100,col:'#a78bfa',r:13,splash:0,slow:0,tier:1,desc:'Steadfast archer. Reliable from long range.'},
+  spark:  {name:'Spark',icon:'⚡',cost:80,range:95,dmg:20,rate:300,col:'#60a5fa',r:11,splash:0,slow:0,tier:1,desc:'Lightning fast. Melts groups with speed.'},
+  sage:   {name:'Sage',icon:'🧊',cost:90,range:125,dmg:15,rate:900,col:'#67e8f9',r:13,splash:0,slow:0.5,tier:1,desc:'Ice mystic. Slows enemies to a crawl.'},
+  bomber: {name:'Bomber',icon:'💣',cost:100,range:150,dmg:60,rate:1700,col:'#fb923c',r:15,splash:90,slow:0,tier:2,unlockLvl:3,desc:'Demolitions expert. Splash damage king.'},
+  phantom:{name:'Phantom',icon:'👁️',cost:120,range:280,dmg:100,rate:2400,col:'#c084fc',r:15,splash:0,slow:0,tier:2,unlockLvl:5,desc:'Shadow assassin. Hits from across the map.'},
+  alchemist:{name:'Alchemist',icon:'⚗️',cost:130,range:130,dmg:25,rate:700,col:'#4ade80',r:14,splash:50,slow:0.3,tier:2,unlockLvl:7,desc:'Mad scientist. Poisons and slows.'},
+  warlord:{name:'Warlord',icon:'⚔️',cost:180,range:160,dmg:90,rate:1300,col:'#f87171',r:17,splash:0,slow:0,tier:3,unlockLvl:10,desc:'Battle-hardened warrior. Pure devastation.'},
+  sorcerer:{name:'Sorcerer',icon:'🔮',cost:200,range:200,dmg:140,rate:2000,col:'#818cf8',r:17,splash:120,slow:0.2,tier:3,unlockLvl:13,desc:'Arcane master. Massive splash and slow.'},
+  dragon: {name:'Dragon',icon:'🐉',cost:280,range:220,dmg:200,rate:1800,col:'#f97316',r:20,splash:150,slow:0,tier:4,unlockLvl:18,desc:'Ancient dragon. Annihilates all in its path.'},
+};
+
+var UPGRADES={
+  ranger:[
+    {name:'Precision',levels:[
+      {name:'Eagle Eye',desc:'+30 range',cost:60,effect:{range:30}},
+      {name:'Hawk Vision',desc:'+60 range',cost:100,effect:{range:60}},
+      {name:'Omniscient',desc:'+120 range',cost:180,effect:{range:120}},
+      {name:'Divine Sight',desc:'+200 range',cost:300,effect:{range:200}},
+      {name:'All-Seeing',desc:'Unlimited range',cost:500,effect:{range:9999}},
+    ]},
+    {name:'Lethality',levels:[
+      {name:'Sharp Arrows',desc:'+20 dmg',cost:70,effect:{dmg:20}},
+      {name:'Barbed Tips',desc:'+50 dmg',cost:120,effect:{dmg:50}},
+      {name:'Poison Coat',desc:'+100 dmg',cost:200,effect:{dmg:100}},
+      {name:'Soul Pierce',desc:'+200 dmg',cost:350,effect:{dmg:200}},
+      {name:'Annihilator',desc:'+500 dmg',cost:600,effect:{dmg:500}},
+    ]},
+    {name:'Tempo',levels:[
+      {name:'Quick Draw',desc:'-150ms',cost:65,effect:{rate:-150}},
+      {name:'Rapid Fire',desc:'-250ms',cost:115,effect:{rate:-250}},
+      {name:'Bullet Hail',desc:'-350ms',cost:200,effect:{rate:-350}},
+      {name:'Storm Shot',desc:'-450ms',cost:340,effect:{rate:-450}},
+      {name:'Infinite Quiver',desc:'-600ms',cost:560,effect:{rate:-600}},
+    ]},
+  ],
+  spark:[
+    {name:'Speed',levels:[
+      {name:'Faster Charge',desc:'-100ms',cost:70,effect:{rate:-100}},
+      {name:'Overclock',desc:'-150ms',cost:120,effect:{rate:-150}},
+      {name:'Hyper Speed',desc:'-200ms',cost:200,effect:{rate:-200}},
+      {name:'Bullet Time',desc:'-250ms',cost:350,effect:{rate:-250}},
+      {name:'Infinite Storm',desc:'-300ms',cost:550,effect:{rate:-300}},
+    ]},
+    {name:'Chain',levels:[
+      {name:'Chain Lightning',desc:'Splash 40',cost:80,effect:{splash:40}},
+      {name:'Arc Storm',desc:'Splash 80',cost:140,effect:{splash:80}},
+      {name:'Thunder God',desc:'Splash 140',cost:240,effect:{splash:140}},
+      {name:'Zeus Wrath',desc:'Splash 220',cost:400,effect:{splash:220}},
+      {name:'Storm Lord',desc:'Splash 350',cost:650,effect:{splash:350}},
+    ]},
+    {name:'Power',levels:[
+      {name:'Charged',desc:'+15 dmg',cost:75,effect:{dmg:15}},
+      {name:'High Voltage',desc:'+35 dmg',cost:130,effect:{dmg:35}},
+      {name:'Overload',desc:'+70 dmg',cost:220,effect:{dmg:70}},
+      {name:'Thunderstrike',desc:'+130 dmg',cost:380,effect:{dmg:130}},
+      {name:'God Bolt',desc:'+250 dmg',cost:620,effect:{dmg:250}},
+    ]},
+  ],
+  sage:[
+    {name:'Freeze',levels:[
+      {name:'Deep Freeze',desc:'Slow +15%',cost:65,effect:{slow:0.15}},
+      {name:'Permafrost',desc:'Slow +20%',cost:110,effect:{slow:0.20}},
+      {name:'Arctic Blast',desc:'Slow +25%',cost:190,effect:{slow:0.25}},
+      {name:'Absolute Zero',desc:'Slow +30%',cost:320,effect:{slow:0.30}},
+      {name:'Time Stop',desc:'Slow +35%',cost:520,effect:{slow:0.35}},
+    ]},
+    {name:'Damage',levels:[
+      {name:'Ice Shards',desc:'+20 dmg',cost:70,effect:{dmg:20}},
+      {name:'Blizzard',desc:'+50 dmg',cost:120,effect:{dmg:50}},
+      {name:'Glacier',desc:'+100 dmg',cost:200,effect:{dmg:100}},
+      {name:'Ice Age',desc:'Splash 80',cost:350,effect:{splash:80}},
+      {name:'Extinction',desc:'Splash 180',cost:580,effect:{splash:180}},
+    ]},
+    {name:'Range',levels:[
+      {name:'Far Sight',desc:'+25 range',cost:60,effect:{range:25}},
+      {name:'Cryo Field',desc:'+50 range',cost:110,effect:{range:50}},
+      {name:'Frost Reach',desc:'+90 range',cost:200,effect:{range:90}},
+      {name:'Polar Aura',desc:'+140 range',cost:340,effect:{range:140}},
+      {name:'Omnifrost',desc:'+220 range',cost:560,effect:{range:220}},
+    ]},
+  ],
+  bomber:[
+    {name:'Blast Radius',levels:[
+      {name:'Bigger Bombs',desc:'Splash +40',cost:80,effect:{splash:40}},
+      {name:'Cluster Bomb',desc:'Splash +80',cost:140,effect:{splash:80}},
+      {name:'Thermobaric',desc:'Splash +150',cost:240,effect:{splash:150}},
+      {name:'Nuke',desc:'Splash +250',cost:400,effect:{splash:250}},
+      {name:'Armageddon',desc:'Splash +400',cost:700,effect:{splash:400}},
+    ]},
+    {name:'Power',levels:[
+      {name:'More TNT',desc:'+40 dmg',cost:90,effect:{dmg:40}},
+      {name:'C4',desc:'+90 dmg',cost:160,effect:{dmg:90}},
+      {name:'Semtex',desc:'+180 dmg',cost:280,effect:{dmg:180}},
+      {name:'Anti-Matter',desc:'+350 dmg',cost:480,effect:{dmg:350}},
+      {name:'Reality Ender',desc:'+700 dmg',cost:800,effect:{dmg:700}},
+    ]},
+    {name:'Fire Rate',levels:[
+      {name:'Quick Fuse',desc:'-200ms',cost:85,effect:{rate:-200}},
+      {name:'Auto Loader',desc:'-350ms',cost:155,effect:{rate:-350}},
+      {name:'Rapid Deploy',desc:'-500ms',cost:270,effect:{rate:-500}},
+      {name:'Barrage',desc:'-650ms',cost:460,effect:{rate:-650}},
+      {name:'Infinite Bombs',desc:'-800ms',cost:750,effect:{rate:-800}},
+    ]},
+  ],
+  phantom:[
+    {name:'Stealth',levels:[
+      {name:'Shadow Step',desc:'+2 targets',cost:100,effect:{multi:2}},
+      {name:'Wraith Form',desc:'+3 targets',cost:180,effect:{multi:3}},
+      {name:'Phase Walk',desc:'+5 targets',cost:300,effect:{multi:5}},
+      {name:'Death Mark',desc:'+8 targets',cost:500,effect:{multi:8}},
+      {name:'Omnislash',desc:'+15 targets',cost:800,effect:{multi:15}},
+    ]},
+    {name:'Lethality',levels:[
+      {name:'Poisoned Blade',desc:'+80 dmg',cost:110,effect:{dmg:80}},
+      {name:'Assassin',desc:'+180 dmg',cost:200,effect:{dmg:180}},
+      {name:'One Shot',desc:'+350 dmg',cost:340,effect:{dmg:350}},
+      {name:'Instant Kill',desc:'+700 dmg',cost:580,effect:{dmg:700}},
+      {name:'Soul Reaper',desc:'+1500 dmg',cost:950,effect:{dmg:1500}},
+    ]},
+    {name:'Range',levels:[
+      {name:'Long Shadow',desc:'+50 range',cost:95,effect:{range:50}},
+      {name:'Far Reach',desc:'+100 range',cost:170,effect:{range:100}},
+      {name:'Void Step',desc:'+180 range',cost:290,effect:{range:180}},
+      {name:'Astral',desc:'+300 range',cost:490,effect:{range:300}},
+      {name:'Omnipresent',desc:'+9999 range',cost:800,effect:{range:9999}},
+    ]},
+  ],
+  alchemist:[
+    {name:'Toxin',levels:[
+      {name:'Venom',desc:'Slow +20%',cost:80,effect:{slow:0.20}},
+      {name:'Acid',desc:'Slow +30%',cost:140,effect:{slow:0.30}},
+      {name:'Plague',desc:'Slow +40%',cost:240,effect:{slow:0.40}},
+      {name:'Black Death',desc:'Slow +50%',cost:420,effect:{slow:0.50}},
+      {name:'Soul Rot',desc:'Slow +60%',cost:700,effect:{slow:0.60}},
+    ]},
+    {name:'Explosion',levels:[
+      {name:'Flask Bomb',desc:'+40 dmg',cost:90,effect:{dmg:40}},
+      {name:'Acid Rain',desc:'+100 dmg',cost:160,effect:{dmg:100}},
+      {name:'Napalm',desc:'Splash +80',cost:280,effect:{splash:80}},
+      {name:'Hellfire',desc:'Splash +150',cost:460,effect:{splash:150}},
+      {name:'Inferno',desc:'Splash +280',cost:750,effect:{splash:280}},
+    ]},
+    {name:'Brew Speed',levels:[
+      {name:'Quick Mix',desc:'-100ms',cost:85,effect:{rate:-100}},
+      {name:'Fast Brew',desc:'-200ms',cost:150,effect:{rate:-200}},
+      {name:'Instant Pour',desc:'-300ms',cost:260,effect:{rate:-300}},
+      {name:'Auto Flask',desc:'-400ms',cost:440,effect:{rate:-400}},
+      {name:'Overflow',desc:'-500ms',cost:720,effect:{rate:-500}},
+    ]},
+  ],
+  warlord:[
+    {name:'Berserker',levels:[
+      {name:'Rage',desc:'-200ms',cost:100,effect:{rate:-200}},
+      {name:'Frenzy',desc:'-300ms',cost:180,effect:{rate:-300}},
+      {name:'Blood Lust',desc:'-400ms',cost:300,effect:{rate:-400}},
+      {name:'Unstoppable',desc:'-500ms',cost:500,effect:{rate:-500}},
+      {name:'God of War',desc:'-600ms',cost:850,effect:{rate:-600}},
+    ]},
+    {name:'Devastation',levels:[
+      {name:'Heavy Blade',desc:'+100 dmg',cost:110,effect:{dmg:100}},
+      {name:'Titan Blade',desc:'+200 dmg',cost:200,effect:{dmg:200}},
+      {name:'Cleave',desc:'Splash 100',cost:350,effect:{splash:100}},
+      {name:'Earthquake',desc:'Splash 200',cost:580,effect:{splash:200}},
+      {name:'World Ender',desc:'Splash 400',cost:950,effect:{splash:400}},
+    ]},
+    {name:'Fortitude',levels:[
+      {name:'Iron Skin',desc:'+30 range',cost:105,effect:{range:30}},
+      {name:'War Stance',desc:'+60 range',cost:190,effect:{range:60}},
+      {name:'Battlefield',desc:'+100 range',cost:320,effect:{range:100}},
+      {name:'Dominion',desc:'+160 range',cost:540,effect:{range:160}},
+      {name:'Warlord Aura',desc:'+250 range',cost:880,effect:{range:250}},
+    ]},
+  ],
+  sorcerer:[
+    {name:'Arcane',levels:[
+      {name:'Magic Missiles',desc:'+2 targets',cost:120,effect:{multi:2}},
+      {name:'Storm Bolts',desc:'+4 targets',cost:210,effect:{multi:4}},
+      {name:'Chain Cast',desc:'+7 targets',cost:360,effect:{multi:7}},
+      {name:'Arcane Surge',desc:'+12 targets',cost:600,effect:{multi:12}},
+      {name:'Reality Warp',desc:'+20 targets',cost:1000,effect:{multi:20}},
+    ]},
+    {name:'Power',levels:[
+      {name:'Empowered',desc:'+120 dmg',cost:130,effect:{dmg:120}},
+      {name:'Mana Surge',desc:'+250 dmg',cost:230,effect:{dmg:250}},
+      {name:'Arcane Blast',desc:'Splash +100',cost:400,effect:{splash:100}},
+      {name:'Void Storm',desc:'Splash +200',cost:680,effect:{splash:200}},
+      {name:'Big Bang',desc:'Splash +400',cost:1100,effect:{splash:400}},
+    ]},
+    {name:'Cooldown',levels:[
+      {name:'Mana Regen',desc:'-200ms',cost:125,effect:{rate:-200}},
+      {name:'Flow State',desc:'-350ms',cost:220,effect:{rate:-350}},
+      {name:'Arcane Haste',desc:'-500ms',cost:380,effect:{rate:-500}},
+      {name:'Time Warp',desc:'-700ms',cost:640,effect:{rate:-700}},
+      {name:'Instant Cast',desc:'-900ms',cost:1050,effect:{rate:-900}},
+    ]},
+  ],
+  dragon:[
+    {name:'Inferno',levels:[
+      {name:'Dragon Fire',desc:'Splash +100',cost:180,effect:{splash:100}},
+      {name:'Flame Storm',desc:'Splash +200',cost:320,effect:{splash:200}},
+      {name:'Inferno',desc:'Splash +350',cost:540,effect:{splash:350}},
+      {name:'Solar Flare',desc:'Splash +550',cost:900,effect:{splash:550}},
+      {name:'Supernova',desc:'Splash +900',cost:1500,effect:{splash:900}},
+    ]},
+    {name:'Ancient Power',levels:[
+      {name:'Elder Dragon',desc:'+200 dmg',cost:200,effect:{dmg:200}},
+      {name:'Ancient Fury',desc:'+400 dmg',cost:360,effect:{dmg:400}},
+      {name:'Titan Rage',desc:'+750 dmg',cost:600,effect:{dmg:750}},
+      {name:'God Slayer',desc:'+1400 dmg',cost:1000,effect:{dmg:1400}},
+      {name:'Universe Ender',desc:'+3000 dmg',cost:1800,effect:{dmg:3000}},
+    ]},
+    {name:'Wing Speed',levels:[
+      {name:'Swift Wings',desc:'-200ms',cost:190,effect:{rate:-200}},
+      {name:'Gale Force',desc:'-350ms',cost:340,effect:{rate:-350}},
+      {name:'Windstrike',desc:'-500ms',cost:570,effect:{rate:-500}},
+      {name:'Tempest',desc:'-700ms',cost:950,effect:{rate:-700}},
+      {name:'Eternal Flight',desc:'-900ms',cost:1600,effect:{rate:-900}},
+    ]},
+  ],
+};
+
+var PLAYER_LEVELS=[0,50,120,220,360,550,800,1100,1500,2000,2700,3500,4500,5800,7400,9500,12000,15000,20000,26000];
+var ENEMY_TYPES=[
+  {name:'Wisp',shape:'circle',col:'#6366f1',hpMult:1,spdMult:1,reward:2,sz:14},
+  {name:'Brute',shape:'square',col:'#ef4444',hpMult:2.5,spdMult:0.7,reward:5,sz:20},
+  {name:'Phantom',shape:'diamond',col:'#8b5cf6',hpMult:1.2,spdMult:1.8,reward:4,sz:12},
+  {name:'Titan',shape:'hexagon',col:'#f59e0b',hpMult:5,spdMult:0.5,reward:12,sz:28},
+  {name:'Ghost',shape:'circle',col:'rgba(200,200,255,0.5)',hpMult:0.8,spdMult:2.2,reward:3,sz:13},
+  {name:'Colossus',shape:'square',col:'#ec4899',hpMult:10,spdMult:0.3,reward:25,sz:36},
+];
+var TOWER_ICONS={ranger:'🏹',spark:'⚡',sage:'🧊',bomber:'💣',phantom:'👁️',alchemist:'⚗️',warlord:'⚔️',sorcerer:'🔮',dragon:'🐉'};
+
+var mc,bgc2,ctx2,bgCtx2,W,H,PATH=[],currentMap=0;
+var lang='korean',diff='basic';
+var coins=100,score=0,hearts=20,wave=1;
+var playerXP=0,playerLevel=1;
+var enemies=[],towers=[],bullets=[],parts=[];
+var pickType=null,placing=false,mouseX=0,mouseY=0;
+var selectedTower=null;
+var learnWords=[],learnIdx=0;
+var qWords=[],qCur=null,streak=0,qLeft=0;
+var waveOn=false,spawnLeft=0,spawnTimer=0,spawnIdx=0;
+var last=0,animId=null,gs='start';
+var audioCtx=null,musicOn=true,musicTimer=null,paused=false;
+var beams=[];
+var MAPS=[
+  {name:'The Crossing',points:function(W,H){return [
+    {x:-60,y:H*.26},{x:W*.11,y:H*.26},{x:W*.11,y:H*.63},
+    {x:W*.32,y:H*.63},{x:W*.32,y:H*.16},{x:W*.56,y:H*.16},
+    {x:W*.56,y:H*.52},{x:W*.74,y:H*.52},{x:W*.74,y:H*.3},
+    {x:W*.91,y:H*.3},{x:W+60,y:H*.3}
+  ];}},
+  {name:'The Spiral',points:function(W,H){return [
+    {x:-60,y:H*.5},{x:W*.15,y:H*.5},{x:W*.15,y:H*.2},
+    {x:W*.5,y:H*.2},{x:W*.5,y:H*.8},{x:W*.3,y:H*.8},
+    {x:W*.3,y:H*.4},{x:W*.65,y:H*.4},{x:W*.65,y:H*.65},
+    {x:W*.85,y:H*.65},{x:W+60,y:H*.65}
+  ];}},
+  {name:'The Gauntlet',points:function(W,H){return [
+    {x:-60,y:H*.15},{x:W*.9,y:H*.15},{x:W*.9,y:H*.4},
+    {x:W*.1,y:H*.4},{x:W*.1,y:H*.65},{x:W*.9,y:H*.65},
+    {x:W*.9,y:H*.85},{x:W+60,y:H*.85}
+  ];}}
+];
+
+function makePath(W,H){
+  return MAPS[currentMap].points(W,H);
+}
+
+// ─── HELPER: check if ANY panel/overlay is blocking ───
+function anyPanelOpen(){
+  var panels=['upgrade-panel','learn-panel','q-panel','pause-menu'];
+  for(var i=0;i<panels.length;i++){
+    if(document.getElementById(panels[i]).style.display==='flex')return true;
+  }
+  return false;
+}
+
+function initCanvas(){
+  mc=document.getElementById('main');
+  bgc2=document.getElementById('bgc');
+  W=mc.width=bgc2.width=window.innerWidth;
+  H=mc.height=bgc2.height=window.innerHeight;
+  ctx2=mc.getContext('2d');
+  bgCtx2=bgc2.getContext('2d');
+  PATH=makePath(W,H);
+  drawBG();
+
+  mc.addEventListener('mousemove',function(e){
+    var r=mc.getBoundingClientRect();
+    mouseX=e.clientX-r.left;
+    mouseY=e.clientY-r.top;
+  });
+
+  // FIX 1: Reworked click handler — consolidated panel checks, fixed placement logic
+  mc.addEventListener('click',function(e){
+    // Block ALL canvas clicks when any panel is open
+    if(anyPanelOpen()) return;
+    if(gs!=='playing') return;
+
+    var r=mc.getBoundingClientRect();
+    var x=e.clientX-r.left, y=e.clientY-r.top;
+
+    // TOWER PLACEMENT
+    if(placing && pickType){
+      // Check not on path and not overlapping existing tower
+      if(!isOnPath(x,y) && !isOnTower(x,y)){
+        var def=TOWERS[pickType];
+        if(coins >= def.cost){
+          var pathCount=(UPGRADES[pickType]||[]).length;
+          towers.push({
+            x:x, y:y, type:pickType, cd:0, kills:0,
+            upgrades:Array.from({length:pathCount},function(){return [0];})
+          });
+          coins -= def.cost;
+          updateUI();
+          renderShop();
+          spawnParts(x,y,def.col,10);
+        }
+      }
+      // Always clear placement state after a click attempt
+      placing=false;
+      pickType=null;
+      mouseX=0; mouseY=0;
+      document.getElementById('hint').style.display='none';
+      var btns=document.querySelectorAll('.tbtn');
+      for(var i=0;i<btns.length;i++) btns[i].classList.remove('selected');
+      return;
+    }
+
+    // CHECK IF CLICKED A TOWER (for upgrade panel)
+    var clicked=null;
+    for(var i=0;i<towers.length;i++){
+      var t=towers[i];
+      var dx=t.x-x, dy=t.y-y;
+      if(Math.sqrt(dx*dx+dy*dy)<28){clicked=t;break;}
+    }
+    if(clicked){openUpgrade(clicked);return;}
+    if(selectedTower){closeUpgrade();}
+  });
+}
+
+// FIX 1b: Helper to prevent placing towers on top of each other
+function isOnTower(x,y){
+  for(var i=0;i<towers.length;i++){
+    var t=towers[i];
+    var dx=t.x-x, dy=t.y-y;
+    if(Math.sqrt(dx*dx+dy*dy)<30) return true;
+  }
+  return false;
+}
+
+function drawBG(){
+  var themes=[
+    {bg:'#0d0a1a',star1:'167,139,250',star2:'244,114,182',pathGlow:'124,58,237',dirt:'30,16,64',dash:'124,58,237'},
+    {bg:'#0a1a0e',star1:'134,239,172',star2:'74,222,128',pathGlow:'22,163,74',dirt:'10,40,18',dash:'34,197,94'},
+    {bg:'#1a0a0a',star1:'252,165,165',star2:'251,113,133',pathGlow:'220,38,38',dirt:'50,10,10',dash:'239,68,68'},
+  ];
+  var th=themes[currentMap];
+
+  bgCtx2.fillStyle=th.bg;bgCtx2.fillRect(0,0,W,H);
+
+  if(currentMap===1){
+    bgCtx2.strokeStyle='rgba(34,197,94,0.06)';bgCtx2.lineWidth=1;
+    for(var row=0;row<8;row++){
+      for(var col=0;col<12;col++){
+        var s=60,hx=col*s*1.5,hy=row*s*1.732+(col%2)*s*0.866;
+        bgCtx2.beginPath();
+        for(var j=0;j<6;j++){var a=Math.PI/3*j;bgCtx2.lineTo(hx+s*0.5*Math.cos(a),hy+s*0.5*Math.sin(a));}
+        bgCtx2.closePath();bgCtx2.stroke();
+      }
+    }
+  }
+
+  if(currentMap===2){
+    bgCtx2.strokeStyle='rgba(220,38,38,0.05)';bgCtx2.lineWidth=1;
+    for(var x=0;x<W;x+=48){bgCtx2.beginPath();bgCtx2.moveTo(x,0);bgCtx2.lineTo(x,H);bgCtx2.stroke();}
+    for(var y=0;y<H;y+=48){bgCtx2.beginPath();bgCtx2.moveTo(0,y);bgCtx2.lineTo(W,y);bgCtx2.stroke();}
+    bgCtx2.fillStyle='rgba(220,38,38,0.06)';
+    bgCtx2.fillRect(0,0,120,120);bgCtx2.fillRect(W-120,0,120,120);
+    bgCtx2.fillRect(0,H-120,120,120);bgCtx2.fillRect(W-120,H-120,120,120);
+  }
+
+  for(var i=0;i<100;i++){
+    var x=Math.random()*W,y=Math.random()*H;
+    var r=Math.random()*1.8+.3;
+    var a=Math.random()*.18+.04;
+    var col2=Math.random()<.5?th.star1:th.star2;
+    bgCtx2.fillStyle='rgba('+col2+','+a+')';
+    bgCtx2.beginPath();bgCtx2.arc(x,y,r,0,Math.PI*2);bgCtx2.fill();
+  }
+
+  bgCtx2.save();bgCtx2.lineCap='round';bgCtx2.lineJoin='round';
+  bgCtx2.strokeStyle='rgba('+th.pathGlow+',.08)';bgCtx2.lineWidth=60;
+  bgCtx2.beginPath();bgCtx2.moveTo(PATH[0].x,PATH[0].y);
+  for(var i=1;i<PATH.length;i++) bgCtx2.lineTo(PATH[i].x,PATH[i].y);
+  bgCtx2.stroke();
+  bgCtx2.strokeStyle='rgba('+th.dirt+',.98)';bgCtx2.lineWidth=44;
+  bgCtx2.beginPath();bgCtx2.moveTo(PATH[0].x,PATH[0].y);
+  for(var i=1;i<PATH.length;i++) bgCtx2.lineTo(PATH[i].x,PATH[i].y);
+  bgCtx2.stroke();
+  bgCtx2.strokeStyle='rgba('+th.dash+',.18)';bgCtx2.lineWidth=40;bgCtx2.setLineDash([24,16]);
+  bgCtx2.beginPath();bgCtx2.moveTo(PATH[0].x,PATH[0].y);
+  for(var i=1;i<PATH.length;i++) bgCtx2.lineTo(PATH[i].x,PATH[i].y);
+  bgCtx2.stroke();
+  bgCtx2.setLineDash([]);bgCtx2.restore();
+}
+
+function setMap(m,el){currentMap=m;var btns=document.querySelectorAll('#map-row .opt-btn');for(var i=0;i<btns.length;i++)btns[i].classList.remove('on');el.classList.add('on');}
+function setLang(l,el){lang=l;var btns=document.querySelectorAll('#lang-row .opt-btn');for(var i=0;i<btns.length;i++)btns[i].classList.remove('on');el.classList.add('on');}
+function setDiff(d,el){diff=d;var btns=document.querySelectorAll('#diff-row .opt-btn');for(var i=0;i<btns.length;i++)btns[i].classList.remove('on');el.classList.add('on');}
+
+function startGame(){
+  document.getElementById('overlay').style.display='none';
+  gs='playing';coins=250;score=0;hearts=20;wave=1;playerXP=0;playerLevel=1;
+  enemies=[];towers=[];bullets=[];parts=[];beams=[];streak=0;usedWords=[];
+  // FIX 2: Reset wave state completely
+  waveOn=false;spawnLeft=0;spawnTimer=0;spawnIdx=0;
+  paused=false;
+  if(!audioCtx){
+    try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();audioCtx.resume();}catch(e){}
+  }
+  updateUI();updateXPBar();renderShop();
+  stopMusic();
+  startMusic();
+  saveProgress();
+  // FIX 2: Ensure game loop is clean before starting
+  if(animId){cancelAnimationFrame(animId);animId=null;}
+  last=performance.now();
+  animId=requestAnimationFrame(gameLoop);
+  showWave(wave,function(){startLearn();});
+}
+
+function restartGame(){
+  document.getElementById('go').style.display='none';
+  startGame();
+}
+
+function getVocab(){return VOCAB[lang][diff];}
+
+var usedWords=[];
+function startLearn(){
+  var pool=getVocab().slice();
+  pool=pool.filter(function(w){return usedWords.indexOf(w.w)<0;});
+  if(pool.length<3){usedWords=[];pool=getVocab().slice();}
+  if(!pool.length){startWave2();return;}
+  for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=pool[i];pool[i]=pool[j];pool[j]=tmp;}
+  var count=Math.min(2+Math.floor(wave/3),4);
+  learnWords=pool.slice(0,count);
+  for(var i=0;i<learnWords.length;i++) usedWords.push(learnWords[i].w);
+  learnIdx=0;
+  showLearnCard();
+}
+
+function showLearnCard(){
+  var lp=document.getElementById('learn-panel');
+  lp.style.display='flex';
+  lp.style.alignItems='center';
+  lp.style.justifyContent='center';
+  var w=learnWords[learnIdx];
+  document.getElementById('lc-badge').textContent=lang==='korean'?'🇰🇷 Korean':'🇯🇵 Japanese';
+  document.getElementById('lc-word').textContent=w.w;
+  document.getElementById('lc-rom').textContent=w.r;
+  document.getElementById('lc-meaning').textContent=w.m;
+  document.getElementById('lc-prog').textContent='Word '+(learnIdx+1)+' of '+learnWords.length;
+  document.getElementById('lc-next').textContent=learnIdx<learnWords.length-1?'Got it →':'Start Quiz →';
+}
+
+function speakLearn(){speak(learnWords[learnIdx].w);}
+function speakQ(){if(qCur)speak(qCur.w);}
+
+function speak(text){
+  if(!window.speechSynthesis)return;
+  speechSynthesis.cancel();
+  var u=new SpeechSynthesisUtterance(text);
+  u.lang=lang==='korean'?'ko-KR':'ja-JP';
+  u.rate=0.75;u.pitch=1.05;
+  var voices=speechSynthesis.getVoices();
+  var preferred=null;
+  var prefix=lang==='korean'?'ko':'ja';
+  for(var i=0;i<voices.length;i++){
+    if(voices[i].lang.indexOf(prefix)===0&&voices[i].localService){preferred=voices[i];break;}
+  }
+  if(preferred)u.voice=preferred;
+  speechSynthesis.speak(u);
+}
+
+function nextLearn(){
+  learnIdx++;
+  if(learnIdx>=learnWords.length){document.getElementById('learn-panel').style.display='none';startQuiz();}
+  else showLearnCard();
+}
+
+function startQuiz(){
+  qLeft=learnWords.length;
+  qWords=learnWords.slice();
+  for(var i=qWords.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=qWords[i];qWords[i]=qWords[j];qWords[j]=tmp;}
+  showQ();
+}
+
+function showQ(){
+  if(qLeft<=0){document.getElementById('q-panel').style.display='none';startWave2();return;}
+  if(!qWords.length){
+    qWords=learnWords.slice();
+    for(var i=qWords.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=qWords[i];qWords[i]=qWords[j];qWords[j]=tmp;}
+  }
+  qCur=qWords.pop();
+  document.getElementById('q-panel').style.display='flex';
+  document.getElementById('q-badge').textContent=lang==='korean'?'🇰🇷 Korean':'🇯🇵 Japanese';
+  document.getElementById('q-word').textContent=qCur.w;
+  document.getElementById('q-rom').textContent=qCur.r;
+  document.getElementById('q-rom').style.opacity='0';
+  document.getElementById('q-feedback').textContent='';
+  document.getElementById('q-prog').textContent=(learnWords.length-qLeft+1)+' of '+learnWords.length;
+  var pool=getVocab();
+  var wrongs=qCur.x.slice();
+  var correct=qCur.m;
+  var similar=pool.filter(function(v){return v.m!==correct&&wrongs.indexOf(v.m)<0;})
+    .sort(function(a,b){return Math.abs(a.m.length-correct.length)-Math.abs(b.m.length-correct.length);});
+  for(var i=0;i<similar.length;i++){if(wrongs.indexOf(similar[i].m)<0)wrongs.push(similar[i].m);}
+  for(var i=wrongs.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=wrongs[i];wrongs[i]=wrongs[j];wrongs[j]=tmp;}
+  var ch=[correct].concat(wrongs.slice(0,3));
+  for(var i=ch.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=ch[i];ch[i]=ch[j];ch[j]=tmp;}
+  var ce=document.getElementById('q-choices');ce.innerHTML='';
+  for(var ci=0;ci<ch.length;ci++){
+    (function(c){
+      var b=document.createElement('button');b.className='cbtn';b.textContent=c;
+      b.onclick=function(){answer(c,b);};ce.appendChild(b);
+    })(ch[ci]);
+  }
+  document.getElementById('q-streak').textContent=streak>1?streak+' streak 🔥':'';
+}
+
+function answer(ans,btn){
+  var allBtns=document.querySelectorAll('.cbtn');
+  for(var i=0;i<allBtns.length;i++) allBtns[i].onclick=null;
+  document.getElementById('q-rom').style.opacity='0.6';
+  var ok=ans===qCur.m;
+  if(ok){
+    btn.classList.add('ok');streak++;
+    var bonus=streak>=5?35:streak>=3?25:streak>=2?18:12;
+    coins+=bonus;score+=bonus*wave;
+    var xpGain=streak>=3?20:10;
+    addXP(xpGain);
+    document.getElementById('q-feedback').textContent='+'+bonus+' gold'+(streak>=2?' (streak!)':'');
+    updateUI();
+  } else {
+    btn.classList.add('no');streak=0;
+    var allBtns2=document.querySelectorAll('.cbtn');
+    for(var i=0;i<allBtns2.length;i++){if(allBtns2[i].textContent===qCur.m)allBtns2[i].classList.add('ok');}
+    document.getElementById('q-feedback').textContent='Not quite — study the romanization above';
+  }
+  document.getElementById('q-streak').textContent=streak>1?streak+' streak 🔥':'';
+  qLeft--;
+  setTimeout(showQ,900);
+}
+
+function addXP(amount){
+  playerXP+=amount;
+  var nextLvl=PLAYER_LEVELS[playerLevel]||999999;
+  if(playerXP>=nextLvl&&playerLevel<PLAYER_LEVELS.length-1){
+    playerXP-=nextLvl;playerLevel++;
+    showNotif('LEVEL UP! You are now Level '+playerLevel);
+    renderShop();
+  }
+  updateXPBar();
+}
+
+function updateXPBar(){
+  var next=PLAYER_LEVELS[playerLevel]||1;
+  var pct=Math.min(100,(playerXP/next)*100);
+  document.getElementById('xpbar').style.width=pct+'%';
+  document.getElementById('xplbl').textContent='LVL '+playerLevel+' — '+playerXP+' / '+next+' XP';
+  document.getElementById('ui-plvl').textContent=playerLevel;
+}
+
+function showNotif(msg){
+  var el=document.getElementById('notif');
+  el.textContent=msg;el.style.opacity='1';
+  setTimeout(function(){el.style.opacity='0';},3000);
+}
+
+function renderShop(){
+  var types=Object.keys(TOWERS);
+  for(var ti=0;ti<types.length;ti++){
+    var type=types[ti];
+    var def=TOWERS[type];
+    var btn=document.getElementById('btn-'+type);
+    if(!btn)continue;
+    var unlocked=!def.unlockLvl||playerLevel>=def.unlockLvl;
+    var canAfford=coins>=def.cost;
+    var lockEl=btn.querySelector('.lock-badge');
+    if(unlocked){
+      btn.classList.remove('locked');
+      if(lockEl)lockEl.style.display='none';
+      // Preserve selected state
+      var isSelected=btn.classList.contains('selected');
+      btn.className='tbtn'+(canAfford?'':' cant')+(isSelected?' selected':'');
+    } else {
+      btn.classList.add('locked');
+      if(lockEl){lockEl.style.display='flex';lockEl.textContent='Lv'+def.unlockLvl;}
+    }
+  }
+}
+
+// FIX 2: Completely reset spawn state when starting a wave
+function startWave2(){
+  waveOn=true;
+  spawnLeft=10+wave*5;
+  spawnTimer=0;
+  spawnIdx=0;
+}
+
+function spawnE(dt){
+  if(!waveOn||spawnIdx>=spawnLeft)return;
+  spawnTimer+=dt;
+  var interval=Math.max(280,1000-wave*45);
+  if(spawnTimer>=interval){
+    spawnTimer=0;
+    var baseSpd=55+wave*12;
+    var baseHp=45+wave*25;
+    var typeIdx=0;
+    var r=Math.random();
+    if(wave>=15&&r<0.04)typeIdx=5;
+    else if(wave>=8&&r<0.1)typeIdx=3;
+    else if(wave>=5&&r<0.2)typeIdx=4;
+    else if(wave>=3&&r<0.3)typeIdx=1;
+    else if(wave>=2&&r<0.4)typeIdx=2;
+    var etype=ENEMY_TYPES[typeIdx];
+    var hp=baseHp*etype.hpMult;
+    var spd=baseSpd*etype.spdMult;
+    var vocPool=getVocab();
+    var voc=vocPool[Math.floor(Math.random()*vocPool.length)];
+    enemies.push({
+      x:PATH[0].x,y:PATH[0].y,pi:0,
+      spd:spd,hp:hp,maxHp:hp,
+      word:voc.w,sz:etype.sz,
+      col:etype.col,shape:etype.shape,
+      reward:etype.reward,
+      slow:1,slowT:0
+    });
+    spawnIdx++;
+  }
+}
+
+function updE(dt){
+  for(var i=enemies.length-1;i>=0;i--){
+    var e=enemies[i];
+    if(e.hp<=0){
+      var killGold=e.reward||2;
+      coins+=killGold;score+=15*wave;addXP(8);updateUI();
+      spawnParts(e.x,e.y,'#a78bfa',14);
+      enemies.splice(i,1);continue;
+    }
+    if(e.slowT>0){e.slowT-=dt;}else{e.slow=1;}
+    if(e.pi>=PATH.length-1){
+      enemies.splice(i,1);
+      hearts--;
+      document.getElementById('hc').textContent=hearts;
+      spawnParts(PATH[PATH.length-1].x,PATH[PATH.length-1].y,'#e74c3c',10);
+      if(hearts<=0){gameOver();return;}
+      continue;
+    }
+    var tgt=PATH[e.pi+1];
+    var dx=tgt.x-e.x,dy=tgt.y-e.y,dist=Math.sqrt(dx*dx+dy*dy);
+    var mv=e.spd*e.slow*(dt/1000);
+    if(dist<=mv){e.x=tgt.x;e.y=tgt.y;e.pi++;}
+    else{e.x+=dx/dist*mv;e.y+=dy/dist*mv;}
+  }
+
+  // FIX 2: Wave completion check — only when all spawned AND all dead
+  if(waveOn && spawnIdx>=spawnLeft && enemies.length===0){
+    waveOn=false;
+    var waveBonus=50+wave*15;
+    coins+=waveBonus;
+    showNotif('Wave Complete! +'+waveBonus+' gold');
+    wave++;
+    addXP(15+wave*3);
+    updateUI();
+    saveProgress();
+    showWave(wave,function(){startLearn();});
+  }
+}
+
+function getTowerStats(t){
+  var base={};
+  var src=TOWERS[t.type];
+  var keys=Object.keys(src);
+  for(var k=0;k<keys.length;k++) base[keys[k]]=src[keys[k]];
+  if(!t.upgrades)t.upgrades=[];
+  var paths=UPGRADES[t.type]||[];
+  for(var pi=0;pi<paths.length;pi++){
+    var path=paths[pi];
+    var currentLvl=(t.upgrades[pi]&&t.upgrades[pi][0])||0;
+    for(var l=0;l<currentLvl;l++){
+      var eff=path.levels[l].effect;
+      if(eff.range!=null)base.range+=eff.range;
+      if(eff.dmg!=null)base.dmg+=eff.dmg;
+      if(eff.rate!=null)base.rate=Math.max(80,base.rate+eff.rate);
+      if(eff.splash!=null)base.splash+=eff.splash;
+      if(eff.slow!=null)base.slow=Math.min(0.95,base.slow+eff.slow);
+      if(eff.multi!=null)base.multi=(base.multi||1)+eff.multi;
+    }
+  }
+  return base;
+}
+
+function updT(dt){
+  for(var ti=0;ti<towers.length;ti++){
+    var t=towers[ti];
+    t.cd=(t.cd||0)-dt;
+    var stats=getTowerStats(t);
+
+    if(t.type==='sage'){
+      if(t.cd<=0){
+        var inRange=[];
+        for(var ei=0;ei<enemies.length;ei++){
+          var e=enemies[ei];
+          var dx=e.x-t.x,dy=e.y-t.y;
+          if(Math.sqrt(dx*dx+dy*dy)<=stats.range) inRange.push(e);
+        }
+        if(inRange.length>0){
+          t.cd=stats.rate;
+          for(var ri=0;ri<inRange.length;ri++){
+            var e=inRange[ri];
+            e.hp-=stats.dmg*0.4;
+            if(stats.slow>0){e.slow=1-stats.slow;e.slowT=800;}
+            spawnParts(e.x,e.y,stats.col,2);
+          }
+          beams.push({x:t.x,y:t.y,r:0,maxR:stats.range,col:stats.col,life:1,type:'ring'});
+        }
+      }
+      continue;
+    }
+
+    if(t.type==='alchemist'){
+      if(t.cd>0)continue;
+      var tgt=null,best=-1;
+      for(var ei=0;ei<enemies.length;ei++){
+        var e=enemies[ei];
+        var dx=e.x-t.x,dy=e.y-t.y;
+        if(Math.sqrt(dx*dx+dy*dy)<=stats.range&&e.pi>best){best=e.pi;tgt=e;}
+      }
+      if(tgt){
+        t.cd=stats.rate;
+        bullets.push({x:t.x,y:t.y,tgt:tgt,spd:180,dmg:stats.dmg,col:stats.col,splash:Math.max(stats.splash,60),slow:stats.slow,sz:10,twrRef:t,arc:true,arcH:0});
+      }
+      continue;
+    }
+
+    if(t.type==='phantom'){
+      if(t.cd>0)continue;
+      var multi=stats.multi||1;
+      var inRange=[];
+      for(var ei=0;ei<enemies.length;ei++){
+        var e=enemies[ei];
+        var dx=e.x-t.x,dy=e.y-t.y;
+        if(Math.sqrt(dx*dx+dy*dy)<=stats.range) inRange.push(e);
+      }
+      inRange.sort(function(a,b){return b.pi-a.pi;});
+      inRange=inRange.slice(0,multi);
+      if(inRange.length){
+        t.cd=stats.rate;
+        for(var ri=0;ri<inRange.length;ri++){
+          var e=inRange[ri];
+          e.hp-=stats.dmg;
+          spawnParts(e.x,e.y,stats.col,8);
+          beams.push({x1:t.x,y1:t.y,x2:e.x,y2:e.y,col:stats.col,life:1,type:'beam'});
+        }
+      }
+      continue;
+    }
+
+    if(t.type==='warlord'){
+      if(t.cd>0)continue;
+      var hit=false;
+      for(var ei=0;ei<enemies.length;ei++){
+        var e=enemies[ei];
+        var dx=e.x-t.x,dy=e.y-t.y;
+        if(Math.sqrt(dx*dx+dy*dy)<=stats.range){
+          e.hp-=stats.dmg;
+          spawnParts(e.x,e.y,stats.col,3);
+          hit=true;
+        }
+      }
+      if(hit){
+        t.cd=stats.rate;
+        beams.push({x:t.x,y:t.y,r:0,maxR:stats.range,col:stats.col,life:1,type:'ring'});
+      }
+      continue;
+    }
+
+    if(t.type==='dragon'){
+      if(t.cd>0)continue;
+      var tgt=null,best=-1;
+      for(var ei=0;ei<enemies.length;ei++){
+        var e=enemies[ei];
+        var dx=e.x-t.x,dy=e.y-t.y;
+        if(Math.sqrt(dx*dx+dy*dy)<=stats.range&&e.pi>best){best=e.pi;tgt=e;}
+      }
+      if(tgt){
+        t.cd=stats.rate;
+        var ang=Math.atan2(tgt.y-t.y,tgt.x-t.x);
+        for(var ei=0;ei<enemies.length;ei++){
+          var e=enemies[ei];
+          var dx=e.x-t.x,dy=e.y-t.y;
+          var dist=Math.sqrt(dx*dx+dy*dy);
+          var eAng=Math.atan2(dy,dx);
+          var adiff=Math.abs(ang-eAng);
+          if(adiff>Math.PI)adiff=Math.PI*2-adiff;
+          if(dist<=stats.range&&adiff<0.6){
+            e.hp-=stats.dmg;
+            spawnParts(e.x,e.y,stats.col,5);
+          }
+        }
+        beams.push({x:t.x,y:t.y,ang:ang,spread:0.6,range:stats.range,col:stats.col,life:1,type:'cone'});
+      }
+      continue;
+    }
+
+    // default: ranger, spark, bomber, sorcerer
+    if(t.cd>0)continue;
+    var tgt=null,best=-1;
+    for(var ei=0;ei<enemies.length;ei++){
+      var e=enemies[ei];
+      var dx=e.x-t.x,dy=e.y-t.y;
+      if(Math.sqrt(dx*dx+dy*dy)<=stats.range&&e.pi>best){best=e.pi;tgt=e;}
+    }
+    if(tgt){
+      t.cd=stats.rate;
+      var multi=stats.multi||1;
+      var targets=[tgt];
+      if(multi>1){
+        for(var ei=0;ei<enemies.length;ei++){
+          var e=enemies[ei];
+          if(e===tgt)continue;
+          var dx=e.x-t.x,dy=e.y-t.y;
+          if(Math.sqrt(dx*dx+dy*dy)<=stats.range) targets.push(e);
+          if(targets.length>=multi) break;
+        }
+      }
+      for(var tgi=0;tgi<targets.length;tgi++){
+        bullets.push({x:t.x,y:t.y,tgt:targets[tgi],spd:340,dmg:stats.dmg,col:stats.col,splash:stats.splash,slow:stats.slow,sz:stats.splash>0?8:4,twrRef:t});
+      }
+    }
+  }
+}
+
+function updB(dt){
+  for(var i=bullets.length-1;i>=0;i--){
+    var b=bullets[i];
+    if(!b.tgt||b.tgt.hp<=0){bullets.splice(i,1);continue;}
+    var dx=b.tgt.x-b.x,dy=b.tgt.y-b.y,dist=Math.sqrt(dx*dx+dy*dy);
+    var mv=b.spd*(dt/1000);
+    if(dist<=mv||dist<6){
+      if(b.splash>0){
+        for(var ei=0;ei<enemies.length;ei++){
+          var e=enemies[ei];
+          if(Math.sqrt((e.x-b.tgt.x)*(e.x-b.tgt.x)+(e.y-b.tgt.y)*(e.y-b.tgt.y))<=b.splash){
+            e.hp-=b.dmg;spawnParts(e.x,e.y,b.col,3);
+            if(b.slow>0){e.slow=1-b.slow;e.slowT=1500;}
+          }
+        }
+        spawnParts(b.tgt.x,b.tgt.y,b.col,14);
+      } else {
+        b.tgt.hp-=b.dmg;
+        if(b.slow>0){b.tgt.slow=1-b.slow;b.tgt.slowT=1500;}
+        spawnParts(b.tgt.x,b.tgt.y,b.col,4);
+      }
+      bullets.splice(i,1);
+      // clean up dead enemies from bullet hits
+      for(var j=enemies.length-1;j>=0;j--){
+        if(enemies[j].hp<=0){
+          var killGold=enemies[j].reward||2;
+          coins+=killGold;score+=15*wave;addXP(8);updateUI();
+          spawnParts(enemies[j].x,enemies[j].y,'#a78bfa',14);
+          if(b.twrRef){b.twrRef.kills=(b.twrRef.kills||0)+1;}
+          enemies.splice(j,1);
+        }
+      }
+      continue;
+    }
+    b.x+=dx/dist*mv;b.y+=dy/dist*mv;
+  }
+}
+
+function spawnParts(x,y,col,n){
+  for(var i=0;i<n;i++){
+    var a=Math.random()*Math.PI*2,s=Math.random()*100+40;
+    parts.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col:col,life:1,sz:Math.random()*3+1});
+  }
+}
+
+function updBeams(dt){
+  for(var i=beams.length-1;i>=0;i--){
+    beams[i].life-=dt/300;
+    if(beams[i].type==='ring')beams[i].r+=dt*0.8;
+    if(beams[i].life<=0)beams.splice(i,1);
+  }
+}
+function updP(dt){
+  for(var i=parts.length-1;i>=0;i--){
+    var p=parts[i];
+    p.x+=p.vx*(dt/1000);p.y+=p.vy*(dt/1000);
+    p.vy+=80*(dt/1000);p.life-=dt/450;
+    if(p.life<=0)parts.splice(i,1);
+  }
+}
+
+function drawTowerShape(ctx,t,x,y,def){
+  ctx.save();
+  ctx.shadowColor=def.col;ctx.shadowBlur=20;
+  var r=def.r;
+  ctx.beginPath();ctx.arc(x,y,r+8,0,Math.PI*2);
+  ctx.fillStyle=def.col+'18';ctx.fill();
+
+  var type=t.type;
+
+  if(type==='ranger'){
+    ctx.fillStyle='#c4a882';
+    ctx.beginPath();ctx.ellipse(x,y,r*.5,r*.75,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=def.col;
+    ctx.beginPath();ctx.ellipse(x,y-r*.3,r*.55,r*.55,0,Math.PI,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#8b5e3c';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(x+r*.6,y,r*.6,Math.PI*1.3,Math.PI*.7,true);ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x+r*.6,y-r*.5);ctx.lineTo(x+r*.6,y+r*.5);ctx.stroke();
+    ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.arc(x-r*.15,y-r*.35,2,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(x+r*.15,y-r*.35,2,0,Math.PI*2);ctx.fill();
+  } else if(type==='spark'){
+    ctx.fillStyle=def.col;
+    ctx.beginPath();ctx.arc(x,y,r*.7,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=2;
+    for(var i=0;i<6;i++){
+      var a=Math.PI/3*i;
+      ctx.beginPath();
+      ctx.moveTo(x+r*.7*Math.cos(a),y+r*.7*Math.sin(a));
+      ctx.lineTo(x+r*Math.cos(a),y+r*Math.sin(a));
+      ctx.stroke();
+    }
+    ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.arc(x-r*.2,y-r*.1,2.5,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(x+r*.2,y-r*.1,2.5,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(x,y+r*.1,r*.25,0,Math.PI);ctx.stroke();
+  } else if(type==='sage'){
+    ctx.fillStyle='#1a3a5c';
+    ctx.beginPath();ctx.ellipse(x,y+r*.1,r*.55,r*.8,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=def.col;
+    ctx.beginPath();ctx.ellipse(x,y-r*.25,r*.5,r*.5,0,Math.PI,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#a0d8ef';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(x-r*.6,y+r*.5);ctx.lineTo(x-r*.6,y-r*.4);ctx.stroke();
+    ctx.fillStyle='#cef';
+    ctx.beginPath();ctx.moveTo(x-r*.6,y-r*.4);
+    ctx.lineTo(x-r*.45,y-r*.7);ctx.lineTo(x-r*.6,y-r*.9);
+    ctx.lineTo(x-r*.75,y-r*.7);ctx.closePath();ctx.fill();
+    ctx.fillStyle=def.col;
+    ctx.beginPath();ctx.arc(x-r*.15,y-r*.3,2,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(x+r*.15,y-r*.3,2,0,Math.PI*2);ctx.fill();
+  } else if(type==='bomber'){
+    ctx.fillStyle='#5a4a3a';
+    ctx.beginPath();ctx.ellipse(x,y,r*.65,r*.75,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#888';
+    ctx.beginPath();ctx.ellipse(x,y-r*.2,r*.6,r*.5,0,Math.PI,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#222';
+    ctx.beginPath();ctx.arc(x+r*.5,y+r*.3,r*.35,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#f1c40f';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(x+r*.5,y);ctx.bezierCurveTo(x+r*.7,y-r*.3,x+r*.9,y-r*.1,x+r*.8,y-r*.4);ctx.stroke();
+    ctx.fillStyle=def.col+'aa';
+    ctx.beginPath();ctx.ellipse(x,y-r*.25,r*.4,r*.2,0,0,Math.PI*2);ctx.fill();
+  } else if(type==='phantom'){
+    ctx.fillStyle='#1a0a2e';
+    ctx.beginPath();
+    ctx.moveTo(x-r*.6,y+r);ctx.lineTo(x-r*.4,y-r*.3);
+    ctx.lineTo(x,y-r*.6);ctx.lineTo(x+r*.4,y-r*.3);
+    ctx.lineTo(x+r*.6,y+r);ctx.closePath();ctx.fill();
+    ctx.fillStyle=def.col;
+    ctx.beginPath();ctx.ellipse(x,y-r*.1,r*.25,r*.15,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.arc(x,y-r*.1,r*.08,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#0a0018';
+    ctx.beginPath();ctx.ellipse(x,y-r*.4,r*.45,r*.35,0,0,Math.PI*2);ctx.fill();
+  } else if(type==='alchemist'){
+    ctx.fillStyle='#e8e8d0';
+    ctx.beginPath();ctx.ellipse(x,y+r*.1,r*.5,r*.75,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f5d5a0';
+    ctx.beginPath();ctx.arc(x,y-r*.35,r*.38,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=def.col;ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(x-r*.15,y-r*.38,r*.16,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.arc(x+r*.15,y-r*.38,r*.16,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x-r*.31,y-r*.38);ctx.lineTo(x+r*.31,y-r*.38);ctx.stroke();
+    ctx.fillStyle=def.col+'bb';
+    ctx.beginPath();ctx.arc(x+r*.55,y+r*.1,r*.28,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#aaa';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(x+r*.48,y-r*.18);ctx.lineTo(x+r*.62,y-r*.18);ctx.stroke();
+  } else if(type==='warlord'){
+    ctx.fillStyle='#4a4a5a';
+    ctx.beginPath();ctx.ellipse(x,y+r*.05,r*.62,r*.78,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#666';
+    ctx.beginPath();ctx.ellipse(x,y-r*.25,r*.52,r*.5,0,Math.PI,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f00a';
+    ctx.beginPath();ctx.ellipse(x,y-r*.3,r*.3,r*.1,0,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#ccc';ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(x+r*.45,y+r*.7);ctx.lineTo(x+r*.7,y-r*.5);ctx.stroke();
+    ctx.strokeStyle='#8b4513';ctx.lineWidth=5;
+    ctx.beginPath();ctx.moveTo(x+r*.52,y+r*.35);ctx.lineTo(x+r*.6,y+r*.15);ctx.stroke();
+    ctx.fillStyle=def.col;
+    ctx.beginPath();ctx.ellipse(x-r*.6,y-r*.1,r*.2,r*.15,-.3,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(x+r*.6,y-r*.1,r*.2,r*.15,.3,0,Math.PI*2);ctx.fill();
+  } else if(type==='sorcerer'){
+    ctx.fillStyle='#2d0a4e';
+    ctx.beginPath();ctx.ellipse(x,y+r*.1,r*.55,r*.8,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=def.col+'66';
+    for(var i=0;i<5;i++){
+      var a=Math.PI*2/5*i;
+      ctx.beginPath();ctx.arc(x+r*.3*Math.cos(a),y+r*.2+r*.2*Math.sin(a),2,0,Math.PI*2);ctx.fill();
+    }
+    ctx.fillStyle='#d4a0c0';
+    ctx.beginPath();ctx.arc(x,y-r*.35,r*.38,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=def.col;
+    ctx.beginPath();ctx.moveTo(x,y-r*1.05);ctx.lineTo(x-r*.42,y-r*.6);ctx.lineTo(x+r*.42,y-r*.6);ctx.closePath();ctx.fill();
+    ctx.beginPath();ctx.ellipse(x,y-r*.6,r*.42,r*.12,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=def.col;
+    ctx.beginPath();ctx.arc(x-r*.55,y+r*.1,r*.22,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.5)';
+    ctx.beginPath();ctx.arc(x-r*.6,y+r*.05,r*.08,0,Math.PI*2);ctx.fill();
+  } else if(type==='dragon'){
+    ctx.fillStyle=def.col;
+    ctx.beginPath();ctx.ellipse(x,y+r*.1,r*.55,r*.65,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=def.col+'aa';
+    ctx.beginPath();ctx.moveTo(x-r*.4,y);
+    ctx.bezierCurveTo(x-r*1.1,y-r*.4,x-r*1.2,y+r*.2,x-r*.5,y+r*.3);ctx.closePath();ctx.fill();
+    ctx.beginPath();ctx.moveTo(x+r*.4,y);
+    ctx.bezierCurveTo(x+r*1.1,y-r*.4,x+r*1.2,y+r*.2,x+r*.5,y+r*.3);ctx.closePath();ctx.fill();
+    ctx.fillStyle=def.col;
+    ctx.beginPath();ctx.ellipse(x,y-r*.45,r*.42,r*.38,0,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(x+r*.2,y-r*.38,r*.28,r*.18,-.3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#888';
+    ctx.beginPath();ctx.moveTo(x-r*.15,y-r*.75);ctx.lineTo(x-r*.3,y-r*1.05);ctx.lineTo(x-.5,y-r*.75);ctx.closePath();ctx.fill();
+    ctx.beginPath();ctx.moveTo(x+r*.15,y-r*.75);ctx.lineTo(x+r*.3,y-r*1.05);ctx.lineTo(x+.5,y-r*.75);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#ff0';
+    ctx.beginPath();ctx.arc(x-r*.1,y-r*.5,3,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(x+r*.25,y-r*.42,3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#f97316aa';
+    ctx.beginPath();ctx.moveTo(x+r*.45,y-r*.35);
+    ctx.bezierCurveTo(x+r*.9,y-r*.5,x+r*1.1,y-r*.2,x+r*.8,y-r*.05);ctx.closePath();ctx.fill();
+  }
+
+  ctx.restore();
+
+  var kills=t.kills||0;
+  if(kills>0){
+    ctx.fillStyle='rgba(0,0,0,0.7)';
+    ctx.beginPath();ctx.roundRect(x-16,y-r-18,32,11,4);ctx.fill();
+    ctx.fillStyle='#f1c40f';ctx.font='bold 7px Nunito';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('\u2694'+kills,x,y-r-12);
+  }
+}
+
+
+function draw2(){
+  ctx2.clearRect(0,0,W,H);
+  var ei,ti;
+  for(ei=0;ei<enemies.length;ei++){
+    var e=enemies[ei];
+    ctx2.save();ctx2.shadowColor=e.col;ctx2.shadowBlur=18;
+    ctx2.fillStyle=e.col;
+    ctx2.beginPath();
+    if(e.shape==='square'){
+      ctx2.rect(e.x-e.sz,e.y-e.sz,e.sz*2,e.sz*2);
+    } else if(e.shape==='diamond'){
+      ctx2.moveTo(e.x,e.y-e.sz);ctx2.lineTo(e.x+e.sz,e.y);
+      ctx2.lineTo(e.x,e.y+e.sz);ctx2.lineTo(e.x-e.sz,e.y);ctx2.closePath();
+    } else if(e.shape==='hexagon'){
+      for(var i=0;i<6;i++){
+        var a=Math.PI/3*i-Math.PI/6;
+        i===0?ctx2.moveTo(e.x+e.sz*Math.cos(a),e.y+e.sz*Math.sin(a)):ctx2.lineTo(e.x+e.sz*Math.cos(a),e.y+e.sz*Math.sin(a));
+      }ctx2.closePath();
+    } else {
+      ctx2.arc(e.x,e.y,e.sz,0,Math.PI*2);
+    }
+    ctx2.fill();
+    if(e.slow<1){
+      ctx2.strokeStyle='#67e8f9';ctx2.lineWidth=3;
+      ctx2.beginPath();ctx2.arc(e.x,e.y,e.sz+4,0,Math.PI*2);ctx2.stroke();
+    }
+    ctx2.restore();
+    ctx2.fillStyle='rgba(0,0,0,.8)';
+    ctx2.beginPath();ctx2.roundRect(e.x-28,e.y-e.sz-18,56,8,4);ctx2.fill();
+    var hpPct=e.hp/e.maxHp;
+    ctx2.fillStyle=hpPct>0.6?'#2ed573':hpPct>0.3?'#f39c12':'#e74c3c';
+    ctx2.beginPath();ctx2.roundRect(e.x-27,e.y-e.sz-17,Math.max(0,54*hpPct),6,3);ctx2.fill();
+    ctx2.fillStyle='rgba(255,255,255,.9)';
+    ctx2.font='bold '+Math.min(e.sz,13)+'px Nunito';
+    ctx2.textAlign='center';ctx2.textBaseline='middle';
+    ctx2.fillText(e.word,e.x,e.y);
+  }
+  for(ti=0;ti<towers.length;ti++){
+    var t=towers[ti];
+    var stats=getTowerStats(t);
+    if(t===selectedTower){
+      ctx2.beginPath();ctx2.arc(t.x,t.y,stats.range,0,Math.PI*2);
+      ctx2.strokeStyle='rgba(255,255,255,.14)';ctx2.lineWidth=1.5;ctx2.stroke();
+    }
+    drawTowerShape(ctx2,t,t.x,t.y,stats);
+  }
+  if(placing&&mouseX){
+    var def=TOWERS[pickType];
+    ctx2.beginPath();ctx2.arc(mouseX,mouseY,def.range,0,Math.PI*2);
+    ctx2.strokeStyle=def.col+'44';ctx2.lineWidth=1.5;ctx2.stroke();
+    // Show red tint if on path or on tower
+    var blocked=isOnPath(mouseX,mouseY)||isOnTower(mouseX,mouseY);
+    ctx2.font=(def.r+4)+'px sans-serif';ctx2.textAlign='center';ctx2.textBaseline='middle';
+    ctx2.globalAlpha=blocked?0.3:0.6;
+    ctx2.fillText(TOWER_ICONS[pickType]||'?',mouseX,mouseY);
+    if(blocked){
+      ctx2.beginPath();ctx2.arc(mouseX,mouseY,20,0,Math.PI*2);
+      ctx2.fillStyle='rgba(231,76,60,0.25)';ctx2.fill();
+    }
+    ctx2.globalAlpha=1;
+  }
+  for(var bi=0;bi<bullets.length;bi++){
+    var b=bullets[bi];
+    ctx2.save();ctx2.shadowColor=b.col;ctx2.shadowBlur=12;
+    ctx2.beginPath();ctx2.arc(b.x,b.y,b.sz,0,Math.PI*2);
+    ctx2.fillStyle=b.col;ctx2.fill();ctx2.restore();
+  }
+  for(var bi=0;bi<beams.length;bi++){
+    var b=beams[bi];
+    ctx2.save();ctx2.globalAlpha=Math.max(0,b.life)*0.7;
+    if(b.type==='ring'){
+      ctx2.strokeStyle=b.col;ctx2.lineWidth=3;ctx2.shadowColor=b.col;ctx2.shadowBlur=12;
+      ctx2.beginPath();ctx2.arc(b.x,b.y,b.r,0,Math.PI*2);ctx2.stroke();
+    } else if(b.type==='beam'){
+      ctx2.strokeStyle=b.col;ctx2.lineWidth=2;ctx2.shadowColor=b.col;ctx2.shadowBlur=16;
+      ctx2.beginPath();ctx2.moveTo(b.x1,b.y1);ctx2.lineTo(b.x2,b.y2);ctx2.stroke();
+    } else if(b.type==='cone'){
+      ctx2.fillStyle=b.col+'55';ctx2.shadowColor=b.col;ctx2.shadowBlur=20;
+      ctx2.beginPath();ctx2.moveTo(b.x,b.y);
+      ctx2.arc(b.x,b.y,b.range,b.ang-b.spread,b.ang+b.spread);
+      ctx2.closePath();ctx2.fill();
+    }
+    ctx2.restore();
+  }
+  for(var pi=0;pi<parts.length;pi++){
+    var p=parts[pi];
+    ctx2.globalAlpha=Math.max(0,p.life);
+    ctx2.beginPath();ctx2.arc(p.x,p.y,p.sz,0,Math.PI*2);
+    ctx2.fillStyle=p.col;ctx2.fill();
+  }
+  ctx2.globalAlpha=1;
+}
+
+// FIX 3: Completely reworked pause system
+function openPauseMenu(){
+  if(gs!=='playing')return;
+  paused=true;
+  document.getElementById('pause-btn').textContent='▶️';
+  document.getElementById('pm-wave').textContent=wave;
+  document.getElementById('pm-score').textContent=score;
+  document.getElementById('pm-map').textContent=MAPS[currentMap].name;
+  document.getElementById('pm-lang').textContent=lang==='korean'?'🇰🇷 Korean':'🇯🇵 Japanese';
+  document.getElementById('pm-diff').textContent=diff.charAt(0).toUpperCase()+diff.slice(1);
+  document.getElementById('pm-lvl').textContent=playerLevel;
+  document.getElementById('pm-gold').textContent=coins;
+  document.getElementById('pm-sound-btn').textContent=musicOn?'🎵 Sound On':'🔇 Sound Off';
+  var savesEl=document.getElementById('pm-saves');
+  try{
+    var s=JSON.parse(localStorage.getItem('babel_save'));
+    if(s){
+      savesEl.innerHTML=
+        '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Last Save</span><span style="color:#a78bfa">Wave '+(s.wave||1)+' · Lv'+(s.playerLevel||1)+'</span></div>'+
+        '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Map</span><span style="color:#a78bfa">'+MAPS[s.currentMap||0].name+'</span></div>'+
+        '<div style="display:flex;justify-content:space-between"><span>Score</span><span style="color:#f1c40f">'+(s.score||0)+'</span></div>';
+    } else {
+      savesEl.innerHTML='<span style="color:rgba(255,255,255,0.25)">No saves yet</span>';
+    }
+  }catch(e){savesEl.innerHTML='<span style="color:rgba(255,255,255,0.25)">No saves yet</span>';}
+  document.getElementById('pause-menu').style.display='flex';
+}
+
+// FIX 3: Resume properly resets timestamp to avoid dt spike
+function closePauseMenu(){
+  document.getElementById('pause-menu').style.display='none';
+  document.getElementById('pause-btn').textContent='⏸️';
+  // Reset timestamp so dt doesn't include entire pause duration
+  last=performance.now();
+  paused=false;
+  // Ensure game loop is running
+  if(!animId){
+    animId=requestAnimationFrame(gameLoop);
+  }
+}
+
+function toggleSoundPause(){
+  if(musicOn){
+    musicOn=false;stopMusic();
+    document.getElementById('music-btn').textContent='🔇';
+    document.getElementById('pm-sound-btn').textContent='🔇 Sound Off';
+  } else {
+    musicOn=true;
+    document.getElementById('music-btn').textContent='🎵';
+    document.getElementById('pm-sound-btn').textContent='🎵 Sound On';
+    startMusic();
+  }
+}
+
+function goToMainMenu(){
+  saveProgress();
+  paused=false;
+  gs='start';
+  if(animId){cancelAnimationFrame(animId);animId=null;}
+  stopMusic();
+  enemies=[];towers=[];bullets=[];parts=[];beams=[];
+  document.getElementById('pause-menu').style.display='none';
+  document.getElementById('pause-btn').textContent='⏸️';
+  document.getElementById('go').style.display='none';
+  document.getElementById('overlay').style.display='flex';
+  initCanvas();
+}
+
+function gameLoop(ts){
+  animId=requestAnimationFrame(gameLoop);
+  var dt=Math.min(ts-last,50);
+  last=ts;
+  if(gs==='playing'&&!paused){
+    if(waveOn)spawnE(dt);
+    updE(dt);updT(dt);updB(dt);updBeams(dt);updP(dt);
+    draw2();
+  } else if(gs==='playing'&&paused){
+    draw2();
+  }
+}
+
+function tryPick(type){
+  var def=TOWERS[type];
+  var unlocked=!def.unlockLvl||playerLevel>=def.unlockLvl;
+  if(!unlocked){showNotif('Reach Level '+def.unlockLvl+' to unlock '+def.name+'!');return;}
+  if(coins<def.cost){showNotif('Need '+def.cost+' gold for '+def.name+'!');return;}
+  // FIX 1: If already placing this type, cancel instead
+  if(placing && pickType===type){
+    placing=false;pickType=null;
+    document.getElementById('hint').style.display='none';
+    var btns=document.querySelectorAll('.tbtn');for(var i=0;i<btns.length;i++)btns[i].classList.remove('selected');
+    return;
+  }
+  selectedTower=null;
+  closeUpgrade();
+  pickType=type;placing=true;
+  document.getElementById('hint').style.display='block';
+  var btns=document.querySelectorAll('.tbtn');for(var i=0;i<btns.length;i++)btns[i].classList.remove('selected');
+  document.getElementById('btn-'+type).classList.add('selected');
+}
+
+function isOnPath(x,y){
+  for(var i=0;i<PATH.length-1;i++){
+    var px=PATH[i].x,py=PATH[i].y,nx=PATH[i+1].x,ny=PATH[i+1].y;
+    var dx=nx-px,dy=ny-py,len=Math.sqrt(dx*dx+dy*dy);
+    var t2=Math.max(0,Math.min(1,((x-px)*dx+(y-py)*dy)/(len*len)));
+    var cx=px+t2*dx,cy=py+t2*dy;
+    if(Math.sqrt((x-cx)*(x-cx)+(y-cy)*(y-cy))<36)return true;
+  }
+  return false;
+}
+
+function openUpgrade(tower){
+  selectedTower=tower;
+  var def=TOWERS[tower.type];
+  var paths=UPGRADES[tower.type]||[];
+  if(!tower.upgrades||tower.upgrades.length<paths.length){
+    tower.upgrades=[];
+    for(var i=0;i<paths.length;i++){
+      tower.upgrades.push(tower.upgrades&&tower.upgrades[i]?tower.upgrades[i]:[0]);
+    }
+  }
+  document.getElementById('upg-title').textContent=def.icon+' '+def.name;
+  document.getElementById('upg-sub').textContent='Kills: '+(tower.kills||0)+' · '+def.desc;
+  var pathsEl=document.getElementById('upg-paths');pathsEl.innerHTML='';
+  for(var pi=0;pi<paths.length;pi++){
+    (function(pi){
+      var path=paths[pi];
+      var currentLvl=(tower.upgrades[pi]&&tower.upgrades[pi][0])||0;
+      var pathDiv=document.createElement('div');pathDiv.className='upg-path';
+      pathDiv.innerHTML='<div class="upg-path-name">'+path.name+'</div>';
+      var levelsDiv=document.createElement('div');levelsDiv.className='upg-levels';
+      for(var li=0;li<path.levels.length;li++){
+        (function(li){
+          var lvl=path.levels[li];
+          var bought=li<currentLvl;
+          var isNext=li===currentLvl;
+          var locked=li>currentLvl;
+          var div=document.createElement('div');
+          div.className='upg-lvl'+(bought?' bought':locked?' locked-upg':'');
+          div.innerHTML='<div>'+lvl.name+'</div><div style="font-size:9px;color:rgba(255,255,255,0.5);margin-top:2px">'+lvl.desc+'</div>'+(!bought?'<div class="cost">'+lvl.cost+'g</div>':'<div style="color:#2ed573;font-size:10px">\u2713</div>');
+          if(isNext&&!bought){
+            div.onclick=function(){
+              if(coins<lvl.cost){showNotif('Not enough gold!');return;}
+              coins-=lvl.cost;
+              if(!tower.upgrades[pi])tower.upgrades[pi]=[0];
+              tower.upgrades[pi][0]=(tower.upgrades[pi][0]||0)+1;
+              updateUI();openUpgrade(tower);
+              spawnParts(tower.x,tower.y,TOWERS[tower.type].col,10);
+            };
+          }
+          levelsDiv.appendChild(div);
+        })(li);
+      }
+      pathDiv.appendChild(levelsDiv);pathsEl.appendChild(pathDiv);
+    })(pi);
+  }
+  document.getElementById('sell-btn').onclick=function(){
+    var sellPrice=Math.floor(TOWERS[tower.type].cost*0.6);
+    coins+=sellPrice;towers=towers.filter(function(t){return t!==tower;});
+    updateUI();closeUpgrade();showNotif('Sold for '+sellPrice+'g');
+  };
+  var upg=document.getElementById('upgrade-panel');
+  upg.style.display='flex';
+  upg.style.alignItems='center';
+  upg.style.justifyContent='center';
+}
+
+function closeUpgrade(){
+  document.getElementById('upgrade-panel').style.display='none';
+  selectedTower=null;
+}
+
+function showWave(w,cb){
+  var el=document.getElementById('wave-flash');
+  el.textContent='WAVE '+w;el.style.opacity='1';
+  setTimeout(function(){el.style.opacity='0';setTimeout(cb,500);},1600);
+}
+
+function updateUI(){
+  document.getElementById('ui-coins').textContent=coins;
+  document.getElementById('ui-wave').textContent=wave;
+  document.getElementById('ui-score').textContent=score;
+  document.getElementById('hc').textContent=hearts;
+  renderShop();
+}
+
+function gameOver(){
+  saveProgress();
+  gs='gameover';
+  document.getElementById('go').style.display='flex';
+  document.getElementById('go-stats').innerHTML='Wave '+wave+'<br>Score '+score+'<br>Level '+playerLevel;
+  musicOn=false;stopMusic();
+}
+
+// ─── Music ───
+var MELODY=[0,4,7,12,7,4,0,4,5,9,12,9,5,4,7,11,14,11,7,4];
+var melodyIdx=0;
+
+function startMusic(){
+  if(!musicOn)return;
+  try{
+    if(!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();}
+    audioCtx.resume().then(function(){playMelody();});
+  }catch(e){}
+}
+
+function noteFreq(semitone){return 130.81*Math.pow(2,semitone/12);}
+
+function playMelody(){
+  if(!musicOn||!audioCtx)return;
+  var semitone=MELODY[melodyIdx%MELODY.length];melodyIdx++;
+  var t=audioCtx.currentTime;
+  var osc=audioCtx.createOscillator();
+  var gain=audioCtx.createGain();
+  osc.connect(gain);gain.connect(audioCtx.destination);
+  osc.frequency.value=noteFreq(semitone);
+  osc.type='sine';
+  gain.gain.setValueAtTime(0.08,t);
+  gain.gain.exponentialRampToValueAtTime(0.001,t+0.6);
+  osc.start(t);osc.stop(t+0.6);
+  var pad=audioCtx.createOscillator();
+  var padGain=audioCtx.createGain();
+  pad.connect(padGain);padGain.connect(audioCtx.destination);
+  pad.frequency.value=noteFreq(semitone-12);
+  pad.type='triangle';
+  padGain.gain.setValueAtTime(0.03,t);
+  padGain.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+  pad.start(t);pad.stop(t+0.5);
+  musicTimer=setTimeout(playMelody,340);
+}
+
+function stopMusic(){
+  if(musicTimer)clearTimeout(musicTimer);
+  musicTimer=null;
+  if(audioCtx){try{audioCtx.close();}catch(e){}audioCtx=null;}
+}
+
+function toggleMusic(){
+  if(musicOn){
+    musicOn=false;stopMusic();
+    document.getElementById('music-btn').textContent='🔇';
+  } else {
+    musicOn=true;
+    document.getElementById('music-btn').textContent='🎵';
+    startMusic();
+  }
+}
+
+function saveProgress(){
+  localStorage.setItem('babel_save',JSON.stringify({
+    playerLevel:playerLevel,playerXP:playerXP,wave:wave,coins:coins,score:score,lang:lang,diff:diff,currentMap:currentMap
+  }));
+}
+
+function loadProgress(){
+  try{
+    var s=JSON.parse(localStorage.getItem('babel_save'));
+    if(s){
+      playerLevel=s.playerLevel||1;
+      playerXP=s.playerXP||0;
+      wave=s.wave||1;
+      coins=s.coins||250;
+      lang=s.lang||'korean';
+      diff=s.diff||'basic';
+      currentMap=s.currentMap||0;
+      var cb=document.getElementById('contbtn');
+      if(cb&&s.wave>1){cb.style.display='block';cb.textContent='\u21A9 CONTINUE \u2014 Wave '+(s.wave)+' \u00B7 Lv'+(s.playerLevel||1);}
+    }
+  }catch(e){}
+}
+
+function continueGame(){
+  document.getElementById('overlay').style.display='none';
+  gs='playing';
+  enemies=[];towers=[];bullets=[];parts=[];beams=[];streak=0;usedWords=[];
+  waveOn=false;spawnLeft=0;spawnTimer=0;spawnIdx=0;
+  paused=false;
+  if(!audioCtx){
+    try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();audioCtx.resume();}catch(e){}
+  }
+  var mapBtns=document.querySelectorAll('#map-row .opt-btn');
+  for(var i=0;i<mapBtns.length;i++) mapBtns[i].classList.toggle('on',i===currentMap);
+  var langBtns=document.querySelectorAll('#lang-row .opt-btn');
+  for(var i=0;i<langBtns.length;i++) langBtns[i].classList.toggle('on',langBtns[i].textContent.indexOf(lang==='korean'?'Korean':'Japanese')>=0);
+  var diffBtns=document.querySelectorAll('#diff-row .opt-btn');
+  for(var i=0;i<diffBtns.length;i++) diffBtns[i].classList.toggle('on',diffBtns[i].textContent.toLowerCase().indexOf(diff)>=0);
+  updateUI();updateXPBar();renderShop();
+  stopMusic();startMusic();
+  PATH=makePath(W,H);
+  drawBG();
+  if(animId){cancelAnimationFrame(animId);animId=null;}
+  last=performance.now();
+  animId=requestAnimationFrame(gameLoop);
+  showWave(wave,function(){startLearn();});
+}
+
+window.addEventListener('resize',function(){initCanvas();});
+if(window.speechSynthesis)window.speechSynthesis.getVoices();
+window.addEventListener('DOMContentLoaded',function(){loadProgress();});
+initCanvas();
+</script>
+</body>
+</html>
